@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Aditya Singh — Digital Marketing, Analytics &amp; AI</title>
+  <meta name="description" content="Portfolio of Aditya Singh — digital marketing, brand strategy, business analytics and AI-powered creative workflows." />
+  <meta name="keywords" content="Aditya Singh, InkOfJatayu, Digital Marketing, Business Analytics, Brand Strategy, AI Creative Technology, Power BI" />
+  <meta name="author" content="Aditya Singh" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Aditya Singh — Digital Marketing, Analytics & AI" />
+  <meta property="og:description" content="Portfolio of Aditya Singh — digital marketing, brand strategy, business analytics and AI-powered creative workflows." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="InkOfJatayu" />
+  <meta property="og:image" content="assets/hero-1280.webp" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Aditya Singh — Digital Marketing, Analytics & AI" />
+  <meta name="twitter:description" content="Portfolio of Aditya Singh — digital marketing, brand strategy, business analytics and AI-powered creative workflows." />
+  <meta name="twitter:image" content="assets/hero-1280.webp" />
+
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+
+  <!-- Preload only the critical hero image -->
+  <link rel="preload" as="image" href="assets/hero-1920.webp" fetchpriority="high" />
+
+  <!-- Fonts: Cormorant Garamond (serif display) + DM Sans (body/UI), matching the original design -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================ -->
+  <!-- SKIP LINK (accessibility)                                     -->
+  <!-- ============================================================ -->
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
+  <!-- ============================================================ -->
+  <!-- LOADING SCREEN                                                -->
+  <!-- ============================================================ -->
+  <div id="loading-screen" class="loader-screen" role="status" aria-live="polite">
+    <p class="loader-label">Entering the Archive</p>
+    <h1 class="loader-title">INKOFJATAYU</h1>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- CUSTOM CURSOR (desktop only, injected/controlled via JS)      -->
+  <!-- ============================================================ -->
+  <div id="custom-cursor" class="custom-cursor" aria-hidden="true" hidden>
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- NAVIGATION                                                    -->
+  <!-- ============================================================ -->
+  <header id="site-header" class="site-header">
+    <nav class="nav" aria-label="Primary">
+      <a href="#top" class="nav-brand cursor-hover" data-scroll-link>
+        INK<span class="text-gold">OF</span>JATAYU
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#archive" class="link-gold cursor-hover" data-scroll-link>Archive</a></li>
+        <li><a href="#craft" class="link-gold cursor-hover" data-scroll-link>Craft</a></li>
+        <li><a href="#work" class="link-gold cursor-hover" data-scroll-link>Work</a></li>
+        <li><a href="#ai-lab" class="link-gold cursor-hover" data-scroll-link>AI Lab</a></li>
+        <li><a href="#contact" class="link-gold cursor-hover" data-scroll-link>Contact</a></li>
+      </ul>
+
+      <button type="button" id="nav-toggle" class="nav-toggle cursor-hover" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+
+    <div id="mobile-menu" class="mobile-menu">
+      <ul>
+        <li><a href="#archive" data-scroll-link>Archive</a></li>
+        <li><a href="#craft" data-scroll-link>Craft</a></li>
+        <li><a href="#work" data-scroll-link>Work</a></li>
+        <li><a href="#ai-lab" data-scroll-link>AI Lab</a></li>
+        <li><a href="#contact" data-scroll-link>Contact</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main id="main-content">
+
+    <!-- ============================================================ -->
+    <!-- SECTION I — THE GATE (Hero)                                   -->
+    <!-- ============================================================ -->
+    <section id="top" class="hero" aria-label="Introduction">
+      <div class="hero-bg" id="hero-bg">
+        <img
+          src="assets/hero-1920.webp"
+          srcset="assets/hero-720.webp 720w, assets/hero-1280.webp 1280w, assets/hero-1920.webp 1920w"
+          sizes="100vw"
+          alt="A moonlit ancient palace courtyard, lanterns glowing among autumn maples and distant mountains"
+          class="hero-bg-img"
+          fetchpriority="high"
+        />
+        <div class="hero-bg-gradient-top"></div>
+        <div class="hero-bg-gradient-bottom"></div>
+      </div>
+
+      <div class="hero-mist" id="hero-mist"></div>
+
+      <div class="hero-feather" id="hero-feather">
+        <div class="float-anim">
+          <img src="assets/feather-480.webp" alt="" width="480" height="720" />
+        </div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-title" id="hero-title">
+          <p class="hero-brand">InkOfJatayu</p>
+          <h1 class="hero-name">Aditya Singh</h1>
+          <p class="hero-positioning">Digital Marketing  ·  Business Analytics  ·  AI Creative Technology</p>
+          <p class="hero-statement">&ldquo;I build at the intersection of strategy, data, technology and visual storytelling.&rdquo;</p>
+        </div>
+
+        <div class="hero-cta" id="hero-cta">
+          <button type="button" class="btn-fill cursor-hover" data-scroll-target="#archive">
+            <span>Enter the Archive</span>
+          </button>
+          <button type="button" class="link-gold cursor-hover btn-text" data-scroll-target="#work">
+            Explore My Work
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-scroll-cue" aria-hidden="true"></div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION II — THE ARCHIVE (About / Education)                  -->
+    <!-- ============================================================ -->
+    <section id="archive" class="section archive-section" aria-label="About Aditya Singh">
+      <div class="parallax-layer" data-speed="-0.6" data-mouse-strength="6">
+        <img
+          class="parallax-img"
+          src="assets/about-1920.webp"
+          srcset="assets/about-720.webp 720w, assets/about-1280.webp 1280w, assets/about-1920.webp 1920w"
+          sizes="100vw"
+          alt="An ancient candlelit library archive, scrolls and books lining tall shelves"
+          loading="lazy"
+        />
+      </div>
+      <div class="archive-overlay"></div>
+
+      <div class="section-inner archive-grid">
+        <div class="archive-intro">
+          <div class="reveal">
+            <p class="eyebrow">Section I</p>
+            <h2 class="section-heading">The Archive</h2>
+          </div>
+          <p class="reveal quote-text">
+            &ldquo;I work across marketing, analytics, brand strategy and AI-powered creative workflows.&rdquo;
+          </p>
+          <p class="reveal body-text">
+            Based in Indore, Madhya Pradesh, India, currently serving as IT Operations Associate, Growwstacks / MTEC Software and Business Automations Pvt. Ltd.. This archive holds the record of a path built at the crossing of business, data, and creative technology.
+          </p>
+        </div>
+
+        <div class="archive-education">
+          <p class="reveal eyebrow eyebrow-muted">Education</p>
+          <ol class="education-list">
+            <li class="reveal education-item">
+              <div class="education-marker"></div>
+              <p class="education-degree">MBA — Business Analytics &amp; Finance</p>
+              <p class="education-school">DAVV, Indore</p>
+              <p class="education-period">2023–2025</p>
+            </li>
+            <li class="reveal education-item">
+              <div class="education-marker"></div>
+              <p class="education-degree">BBA — Marketing</p>
+              <p class="education-school">DAVV, Indore</p>
+              <p class="education-period">2020–2023</p>
+            </li>
+          </ol>
+
+          <div class="reveal archive-note">
+            <div class="archive-note-scroll">
+              <img src="assets/scroll-480.webp" alt="" width="480" height="320" loading="lazy" />
+            </div>
+            <p>Marketing, business, data and AI — read not as separate disciplines, but as one continuous craft.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION III — THE CRAFT (Skills)                              -->
+    <!-- ============================================================ -->
+    <section id="craft" class="section craft-section" aria-label="Skills and craft">
+      <div class="parallax-layer" data-speed="-0.5" data-mouse-strength="5">
+        <img
+          class="parallax-img"
+          src="assets/skills-1920.webp"
+          srcset="assets/skills-720.webp 720w, assets/skills-1280.webp 1280w, assets/skills-1920.webp 1920w"
+          sizes="100vw"
+          alt="A moonlit study with botanical arrangements, ink brushes, and scrolls"
+          loading="lazy"
+        />
+      </div>
+      <div class="craft-overlay"></div>
+
+      <div class="floating-el craft-botanical" data-speed="-0.3">
+        <img src="assets/botanical-900.webp" alt="" loading="lazy" />
+      </div>
+
+      <div class="section-inner">
+        <div class="reveal">
+          <p class="eyebrow">Section II</p>
+          <h2 class="section-heading">The Craft</h2>
+          <p class="section-lead">A cultivated set of tools, gathered like specimens in a study — each category a small garden of its own.</p>
+        </div>
+
+        <div class="craft-layout">
+          <div class="craft-categories">
+            <ul id="craft-category-list">
+              <li class="reveal">
+                <button type="button" class="craft-cat-btn cursor-hover is-active" data-category="marketing" aria-pressed="true">Marketing</button>
+              </li>
+              <li class="reveal">
+                <button type="button" class="craft-cat-btn cursor-hover" data-category="analytics" aria-pressed="false">Analytics</button>
+              </li>
+              <li class="reveal">
+                <button type="button" class="craft-cat-btn cursor-hover" data-category="branding" aria-pressed="false">Branding</button>
+              </li>
+              <li class="reveal">
+                <button type="button" class="craft-cat-btn cursor-hover" data-category="ai" aria-pressed="false">AI</button>
+              </li>
+              <li class="reveal">
+                <button type="button" class="craft-cat-btn cursor-hover" data-category="development" aria-pressed="false">Development</button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="craft-detail">
+            <div id="craft-skill-panel" class="craft-skill-panel">
+              <!-- Populated by script.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION IV — THE WORK (Projects)                              -->
+    <!-- ============================================================ -->
+    <section id="work" class="section work-section" aria-label="Selected work">
+      <div class="parallax-layer" data-speed="-0.4" data-mouse-strength="4">
+        <img
+          class="parallax-img"
+          src="assets/project-1920.webp"
+          srcset="assets/project-720.webp 720w, assets/project-1280.webp 1280w, assets/project-1920.webp 1920w"
+          sizes="100vw"
+          alt="Grand ancient archive hall with towering shelves of scrolls"
+          loading="lazy"
+        />
+      </div>
+      <div class="work-overlay"></div>
+
+      <div class="section-inner">
+        <div class="reveal">
+          <p class="eyebrow">Section III</p>
+          <h2 class="section-heading">The Work</h2>
+          <p class="section-lead">Each record below opens like a scroll pulled from the shelf — a project, a role, a purpose.</p>
+        </div>
+
+        <ol id="work-list" class="work-list">
+          <!-- Populated by script.js from PROJECTS data -->
+        </ol>
+      </div>
+    </section>
+
+    <!-- Project viewer modal -->
+    <div id="project-viewer" class="project-viewer" role="dialog" aria-modal="true" aria-labelledby="project-viewer-title" hidden>
+      <div class="project-viewer-scroll">
+        <div class="project-viewer-texture" aria-hidden="true"></div>
+        <button type="button" id="project-viewer-close" class="project-viewer-close cursor-hover">Close ✕</button>
+
+        <p id="project-viewer-category" class="eyebrow eyebrow-tight"></p>
+        <h3 id="project-viewer-title" class="project-viewer-title"></h3>
+        <p id="project-viewer-role" class="project-viewer-role"></p>
+
+        <p id="project-viewer-description" class="project-viewer-description"></p>
+
+        <div class="project-viewer-block">
+          <p class="eyebrow eyebrow-tight">Tools &amp; Skills</p>
+          <div id="project-viewer-tools" class="project-viewer-tools"></div>
+        </div>
+
+        <div class="project-viewer-block project-viewer-purpose">
+          <p class="eyebrow eyebrow-tight">Purpose</p>
+          <p id="project-viewer-outcome" class="project-viewer-outcome"></p>
+        </div>
+
+        <div class="project-viewer-nav">
+          <button type="button" id="project-viewer-prev" class="link-gold cursor-hover">← Previous</button>
+          <button type="button" id="project-viewer-next" class="link-gold cursor-hover">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION V — THE AI LAB                                        -->
+    <!-- ============================================================ -->
+    <section id="ai-lab" class="section ai-lab-section" aria-label="AI Lab">
+      <div class="ai-lab-radial"></div>
+      <div class="ai-lab-fade-top"></div>
+      <div class="ai-lab-fade-bottom"></div>
+
+      <div class="ai-lab-ink" id="ai-lab-ink" aria-hidden="true">
+        <img src="assets/ink-splash-900.webp" alt="" loading="lazy" />
+      </div>
+
+      <div class="section-inner">
+        <div class="reveal">
+          <p class="eyebrow">Section IV</p>
+          <h2 class="section-heading">The AI Lab</h2>
+          <p class="section-lead ai-lab-tagline">Where strategy meets generative technology.</p>
+        </div>
+
+        <div class="ai-lab-capabilities">
+          <div class="reveal ai-cap"><span class="ai-cap-dot"></span><span>AI Image Generation</span></div>
+          <div class="reveal ai-cap"><span class="ai-cap-dot"></span><span>AI Video Generation</span></div>
+          <div class="reveal ai-cap"><span class="ai-cap-dot"></span><span>Prompt Engineering</span></div>
+          <div class="reveal ai-cap"><span class="ai-cap-dot"></span><span>Creative Automation</span></div>
+          <div class="reveal ai-cap"><span class="ai-cap-dot"></span><span>Vibe Coding</span></div>
+          <div class="reveal ai-cap"><span class="ai-cap-dot"></span><span>AI-Assisted Workflows</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION VI — THE PATH (Timeline)                              -->
+    <!-- ============================================================ -->
+    <section id="path" class="section path-section" aria-label="Career timeline">
+      <div class="section-inner section-inner-narrow">
+        <div class="reveal">
+          <p class="eyebrow">Section V</p>
+          <h2 class="section-heading">The Path</h2>
+        </div>
+
+        <ol class="timeline-list">
+          <div class="timeline-line" aria-hidden="true"></div>
+
+          <li class="reveal timeline-item">
+            <span class="timeline-dot" aria-hidden="true"></span>
+            <p class="timeline-period">2023</p>
+            <h3 class="timeline-title">Independent Brand Strategist &amp; Consultant</h3>
+          </li>
+          <li class="reveal timeline-item">
+            <span class="timeline-dot" aria-hidden="true"></span>
+            <p class="timeline-period">2024</p>
+            <h3 class="timeline-title">Marketing Associate</h3>
+            <p class="timeline-org">Maltar Services</p>
+          </li>
+          <li class="reveal timeline-item">
+            <span class="timeline-dot" aria-hidden="true"></span>
+            <p class="timeline-period">2024–Present</p>
+            <h3 class="timeline-title">Strategic Brand Executive</h3>
+            <p class="timeline-org">Ventilia</p>
+          </li>
+          <li class="reveal timeline-item">
+            <span class="timeline-dot" aria-hidden="true"></span>
+            <p class="timeline-period">2026–Present</p>
+            <h3 class="timeline-title">IT Operations Associate</h3>
+            <p class="timeline-org">Growwstacks / MTEC</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION VII — CERTIFICATIONS                                  -->
+    <!-- ============================================================ -->
+    <section id="certifications" class="section certifications-section" aria-label="Certifications">
+      <div class="section-inner section-inner-narrow">
+        <div class="reveal">
+          <p class="eyebrow">Section VI</p>
+          <h2 class="section-heading">Certifications</h2>
+        </div>
+
+        <div class="certifications-grid">
+          <div class="reveal certification-card">
+            <div class="certification-texture" aria-hidden="true"></div>
+            <p class="eyebrow eyebrow-tight">Google</p>
+            <h3 class="certification-title">Foundations of Digital Marketing &amp; E-commerce</h3>
+          </div>
+          <div class="reveal certification-card">
+            <div class="certification-texture" aria-hidden="true"></div>
+            <p class="eyebrow eyebrow-tight">Infosys</p>
+            <h3 class="certification-title">Young Industry Enthusiast — Retail Focus</h3>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION VIII — CONTACT                                        -->
+    <!-- ============================================================ -->
+    <section id="contact" class="section contact-section" aria-label="Contact">
+      <div class="parallax-layer" data-speed="-0.5" data-mouse-strength="5">
+        <img
+          class="parallax-img"
+          src="assets/contact-1920.webp"
+          srcset="assets/contact-720.webp 720w, assets/contact-1280.webp 1280w, assets/contact-1920.webp 1920w"
+          sizes="100vw"
+          alt="A quiet moonlit pavilion beside a still lake, lantern light reflected in the water"
+          loading="lazy"
+        />
+      </div>
+      <div class="contact-overlay-top"></div>
+      <div class="contact-overlay-bottom"></div>
+
+      <div class="floating-el contact-lantern">
+        <div class="sway-anim">
+          <img src="assets/lantern-480.webp" alt="" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="section-inner contact-inner">
+        <div class="reveal">
+          <p class="eyebrow">Section VII</p>
+          <h2 class="contact-heading">The story doesn&rsquo;t end here.</h2>
+        </div>
+
+        <p class="reveal contact-subheading">Have an idea worth building?</p>
+
+        <div class="reveal contact-cta">
+          <a href="mailto:aditya566knw@gmail.com" class="btn-fill cursor-hover">
+            <span>Let&rsquo;s Talk</span>
+          </a>
+          <a href="mailto:aditya566knw@gmail.com" class="link-gold cursor-hover contact-email">
+            aditya566knw@gmail.com
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER                                                        -->
+  <!-- ============================================================ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-brand">INK<span class="text-gold">OF</span>JATAYU</p>
+        <p class="footer-name">Aditya Singh</p>
+        <p class="footer-tagline">Digital Marketing · Analytics · AI</p>
+      </div>
+      <div class="footer-meta">
+        <p class="footer-copyright" id="footer-copyright">© 2026 Aditya Singh</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
