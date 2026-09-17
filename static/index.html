@@ -60,6 +60,11 @@
   </div>
 
   <!-- ============================================================ -->
+  <!-- WORLD ENGINE CANVAS (shared wind/leaves/particles, whole page) -->
+  <!-- ============================================================ -->
+  <canvas id="world-canvas" class="world-canvas" aria-hidden="true"></canvas>
+
+  <!-- ============================================================ -->
   <!-- NAVIGATION                                                    -->
   <!-- ============================================================ -->
   <header id="site-header" class="site-header">
@@ -109,11 +114,12 @@
         />
         <div class="hero-bg-gradient-top"></div>
         <div class="hero-bg-gradient-bottom"></div>
+        <div class="hero-lantern-spot hero-lantern-spot--left" aria-hidden="true"></div>
+        <div class="hero-lantern-spot hero-lantern-spot--right" aria-hidden="true"></div>
       </div>
 
       <div class="hero-mist" id="hero-mist"></div>
       <div class="hero-rays" id="hero-rays" aria-hidden="true"></div>
-      <canvas class="hero-particles" id="hero-particles" aria-hidden="true"></canvas>
 
       <div class="hero-feather" id="hero-feather" data-cursor="decorative">
         <div class="hero-feather-parallax" id="hero-feather-parallax">
@@ -298,6 +304,7 @@
       <div class="project-viewer-scroll">
         <div class="project-viewer-texture" aria-hidden="true"></div>
         <button type="button" id="project-viewer-close" class="project-viewer-close cursor-hover">Close ✕</button>
+        <div class="project-viewer-seal" aria-hidden="true">記</div>
 
         <p id="project-viewer-category" class="eyebrow eyebrow-tight"></p>
         <h3 id="project-viewer-title" class="project-viewer-title"></h3>
@@ -333,6 +340,7 @@
       <div class="ai-lab-ink" id="ai-lab-ink" aria-hidden="true">
         <img src="assets/ink-splash-900.webp" alt="" loading="lazy" />
       </div>
+      <canvas class="ai-lab-nodes" id="ai-lab-nodes" aria-hidden="true"></canvas>
 
       <div class="section-inner">
         <div class="reveal">
@@ -356,6 +364,8 @@
     <!-- SECTION VI — THE PATH (Timeline)                              -->
     <!-- ============================================================ -->
     <section id="path" class="section path-section" aria-label="Career timeline">
+      <canvas class="path-atmosphere" id="path-atmosphere" aria-hidden="true"></canvas>
+      <div class="path-silhouette" aria-hidden="true"></div>
       <div class="section-inner section-inner-narrow">
         <div class="reveal">
           <p class="eyebrow">Section V</p>
@@ -405,11 +415,13 @@
         <div class="certifications-grid">
           <div class="reveal certification-card">
             <div class="certification-texture" aria-hidden="true"></div>
+            <div class="certification-ink" aria-hidden="true"></div>
             <p class="eyebrow eyebrow-tight">Google</p>
             <h3 class="certification-title">Foundations of Digital Marketing &amp; E-commerce</h3>
           </div>
           <div class="reveal certification-card">
             <div class="certification-texture" aria-hidden="true"></div>
+            <div class="certification-ink" aria-hidden="true"></div>
             <p class="eyebrow eyebrow-tight">Infosys</p>
             <h3 class="certification-title">Young Industry Enthusiast — Retail Focus</h3>
           </div>
@@ -433,9 +445,11 @@
       </div>
       <div class="contact-overlay-top"></div>
       <div class="contact-overlay-bottom"></div>
+      <div class="contact-water-shimmer" aria-hidden="true"></div>
 
-      <div class="floating-el contact-lantern">
+      <div class="floating-el contact-lantern" data-cursor="decorative">
         <div class="sway-anim">
+          <div class="lantern-glow" aria-hidden="true"></div>
           <img src="assets/lantern-480.webp" alt="" loading="lazy" />
         </div>
       </div>
