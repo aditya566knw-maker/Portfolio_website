@@ -61,7 +61,13 @@
 
   /* ------------------------------------------------------------
      3. Custom cursor
-     ------------------------------------------------------------ */
+     ------------------------------------------------------------
+     Dot tracks the raw pointer 1:1 (zero perceived latency). The ring
+     eases behind it and swaps shape depending on what's under the
+     pointer: plain interactive elements get a gentle expand, work-list
+     items get a larger dashed "inspect" ring, decorative artwork gets
+     the faintest widen. A single trailing ink droplet eases further
+     behind still, for a quiet brush-trail feel — never a comet tail. */
   (function initCustomCursor() {
     var cursorEnabled = isFinePointer && !isCoarsePointer && !prefersReduced;
     if (!cursorEnabled) return;
@@ -69,16 +75,18 @@
     var cursorEl = document.getElementById("custom-cursor");
     var dotEl = cursorEl.querySelector(".cursor-dot");
     var ringEl = cursorEl.querySelector(".cursor-ring");
+    var trailEl = cursorEl.querySelector(".cursor-trail");
     if (!cursorEl || !dotEl || !ringEl) return;
 
     cursorEl.hidden = false;
     document.body.classList.add("cursor-enabled");
 
-    var targetX = 0;
-    var targetY = 0;
-    var ringX = 0;
-    var ringY = 0;
-    var raf = 0;
+    var targetX = window.innerWidth / 2;
+    var targetY = window.innerHeight / 2;
+    var ringX = targetX;
+    var ringY = targetY;
+    var trailX = targetX;
+    var trailY = targetY;
 
     window.addEventListener(
       "pointermove",
@@ -87,21 +95,41 @@
         targetY = e.clientY;
         dotEl.style.transform = "translate3d(" + targetX + "px, " + targetY + "px, 0)";
 
-        var interactive = !!e.target.closest(
-          'a, button, [role="button"], input, textarea, .cursor-hover'
+        var target = e.target.closest(
+          'a, button, [role="button"], input, textarea, .cursor-hover, [data-cursor]'
         );
-        ringEl.classList.toggle("is-active", interactive);
+        var mode = target ? target.closest('[data-cursor="inspect"]') ? "inspect"
+          : target.closest('[data-cursor="decorative"]') ? "decorative"
+          : "active" : null;
+
+        ringEl.classList.toggle("is-active", mode === "active");
+        ringEl.classList.toggle("is-inspect", mode === "inspect");
+        ringEl.classList.toggle("is-decorative", mode === "decorative");
       },
       { passive: true }
     );
 
+    window.addEventListener("pointerdown", function () {
+      ringEl.classList.add("is-pressed");
+    });
+    window.addEventListener("pointerup", function () {
+      ringEl.classList.remove("is-pressed");
+    });
+
     function tick() {
-      ringX += (targetX - ringX) * 0.18;
-      ringY += (targetY - ringY) * 0.18;
+      ringX = lerp(ringX, targetX, 0.22);
+      ringY = lerp(ringY, targetY, 0.22);
       ringEl.style.transform = "translate3d(" + ringX + "px, " + ringY + "px, 0)";
-      raf = requestAnimationFrame(tick);
+
+      if (trailEl) {
+        trailX = lerp(trailX, ringX, 0.12);
+        trailY = lerp(trailY, ringY, 0.12);
+        trailEl.style.transform = "translate3d(" + trailX + "px, " + trailY + "px, 0)";
+      }
+
+      requestAnimationFrame(tick);
     }
-    raf = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
   })();
 
   /* ------------------------------------------------------------
@@ -186,6 +214,7 @@
   (function initHero() {
     var bgEl = document.getElementById("hero-bg");
     var mistEl = document.getElementById("hero-mist");
+    var raysEl = document.getElementById("hero-rays");
     var featherEl = document.getElementById("hero-feather");
     var titleEl = document.getElementById("hero-title");
     var ctaEl = document.getElementById("hero-cta");
@@ -198,7 +227,7 @@
       played = true;
 
       if (prefersReduced) {
-        [bgEl, mistEl, featherEl, titleEl, ctaEl].forEach(function (el) {
+        [bgEl, mistEl, raysEl, featherEl, titleEl, ctaEl].forEach(function (el) {
           if (el) el.classList.add("is-visible");
         });
         return;
@@ -214,6 +243,7 @@
 
       window.setTimeout(function () {
         mistEl.classList.add("is-visible");
+        if (raysEl) raysEl.classList.add("is-visible");
       }, 1100);
 
       window.setTimeout(function () {
@@ -224,14 +254,15 @@
         ctaEl.classList.add("is-visible");
       }, 2200);
 
-      // Gentle continuous camera drift once the intro settles.
+      // Gentle continuous "breathing" — an almost imperceptible
+      // 1.00 -> 1.03 scale, toggled slowly so CSS eases between the two.
       window.setTimeout(function () {
+        var breathingIn = false;
         bgEl.classList.add("is-drifting");
-        var driftIn = true;
         window.setInterval(function () {
-          driftIn = !driftIn;
-          bgEl.style.transform = driftIn ? "scale(1.06)" : "scale(1)";
-        }, 18000);
+          breathingIn = !breathingIn;
+          bgEl.style.transform = breathingIn ? "scale(1.03)" : "scale(1)";
+        }, 22000);
       }, 2600);
     }
 
@@ -253,6 +284,131 @@
   })();
 
   /* ------------------------------------------------------------
+     5b. Hero layered parallax + ambient particles
+     ------------------------------------------------------------
+     "The painting is alive": background/palace drifts a hair on mouse
+     move, the feather drifts more (foreground = more parallax), and a
+     handful of soft motes/petals drift upward across the courtyard.
+     Everything is capped to a tiny range — never an aggressive pan. */
+  (function initHeroLiving() {
+    if (prefersReduced) return;
+
+    var heroEl = document.querySelector(".hero");
+    var bgImg = document.querySelector(".hero-bg-img");
+    var featherEl = document.getElementById("hero-feather-parallax");
+    if (!heroEl) return;
+
+    var mouseEnabled = !isCoarsePointer;
+    if (mouseEnabled && (bgImg || featherEl)) {
+      var mx = 0;
+      var my = 0;
+      var bgX = 0;
+      var bgY = 0;
+      var featherX = 0;
+      var featherY = 0;
+
+      window.addEventListener(
+        "mousemove",
+        function (e) {
+          mx = (e.clientX / window.innerWidth - 0.5) * 2;
+          my = (e.clientY / window.innerHeight - 0.5) * 2;
+        },
+        { passive: true }
+      );
+
+      (function tick() {
+        // Background: barely-there drift (distant mountains/palace).
+        bgX = lerp(bgX, mx * 6, 0.04);
+        bgY = lerp(bgY, my * 4, 0.04);
+        if (bgImg) {
+          bgImg.style.transform = "translate3d(" + bgX + "px, " + bgY + "px, 0)";
+        }
+        // Foreground feather: responds more than the background, plus a
+        // whisper of rotation for a light, airborne feel.
+        featherX = lerp(featherX, mx * 16, 0.05);
+        featherY = lerp(featherY, my * 12, 0.05);
+        if (featherEl) {
+          featherEl.style.transform =
+            "translate3d(" + featherX + "px, " + featherY + "px, 0) rotate(" + (mx * 3).toFixed(2) + "deg)";
+        }
+        requestAnimationFrame(tick);
+      })();
+    }
+
+    // Ambient particle canvas: fine gold motes drifting upward, with a
+    // few slow "falling leaf" petals. Kept sparse and slow on purpose.
+    var canvas = document.getElementById("hero-particles");
+    if (!canvas || !canvas.getContext) return;
+
+    var isMobile = window.matchMedia("(max-width: 639px)").matches;
+    var ctx = canvas.getContext("2d");
+    var particles = [];
+    var count = isMobile ? 0 : isCoarsePointer ? 10 : 22;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = 0;
+    var h = 0;
+
+    function resize() {
+      w = heroEl.clientWidth;
+      h = heroEl.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function makeParticle(seedTop) {
+      var isLeaf = Math.random() < 0.18;
+      return {
+        x: Math.random() * w,
+        y: seedTop ? Math.random() * h : h + 20,
+        r: isLeaf ? 2.5 + Math.random() * 2 : 0.6 + Math.random() * 1.2,
+        speed: isLeaf ? 0.12 + Math.random() * 0.1 : 0.06 + Math.random() * 0.1,
+        drift: (Math.random() - 0.5) * 0.3,
+        alpha: isLeaf ? 0.35 + Math.random() * 0.25 : 0.25 + Math.random() * 0.35,
+        isLeaf: isLeaf,
+        angle: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.01,
+      };
+    }
+
+    if (count > 0) {
+      resize();
+      for (var i = 0; i < count; i++) particles.push(makeParticle(true));
+      window.addEventListener("resize", resize);
+
+      (function draw() {
+        ctx.clearRect(0, 0, w, h);
+        particles.forEach(function (p) {
+          p.y -= p.speed;
+          p.x += p.drift * 0.2;
+          p.angle += p.spin;
+          if (p.y < -20) {
+            Object.assign(p, makeParticle(false));
+          }
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.isLeaf ? "rgba(201, 163, 92, 0.9)" : "rgba(224, 189, 126, 0.9)";
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          if (p.isLeaf) {
+            ctx.beginPath();
+            ctx.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        });
+        requestAnimationFrame(draw);
+      })();
+    }
+  })();
+
+  /* ------------------------------------------------------------
      6. Navigation
      ------------------------------------------------------------ */
   (function initNavigation() {
@@ -265,6 +421,41 @@
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Active-section indicator: lights up the nav link whose section is
+    // currently most in view, so the reader always knows where they are
+    // in the archive.
+    var navLinks = Array.prototype.slice.call(document.querySelectorAll(".nav-links a[href^='#']"));
+    var trackedSections = navLinks
+      .map(function (link) {
+        var id = link.getAttribute("href");
+        var section = id && id !== "#top" ? document.querySelector(id) : null;
+        return section ? { link: link, section: section } : null;
+      })
+      .filter(Boolean);
+
+    if (trackedSections.length && "IntersectionObserver" in window) {
+      var navObserver = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            var match = trackedSections.filter(function (t) {
+              return t.section === entry.target;
+            })[0];
+            if (!match) return;
+            if (entry.isIntersecting) {
+              navLinks.forEach(function (l) {
+                l.classList.remove("is-active");
+              });
+              match.link.classList.add("is-active");
+            }
+          });
+        },
+        { threshold: 0, rootMargin: "-45% 0px -45% 0px" }
+      );
+      trackedSections.forEach(function (t) {
+        navObserver.observe(t.section);
+      });
+    }
 
     function closeMobileMenu() {
       toggleBtn.setAttribute("aria-expanded", "false");
@@ -394,6 +585,38 @@
     }
 
     requestAnimationFrame(tick);
+  })();
+
+  /* ------------------------------------------------------------
+     8b. Section-entry ink transitions
+     ------------------------------------------------------------
+     Each chamber blooms with a faint ink wash the first time it's
+     entered — "turning a page" rather than a hard cut — then the wash
+     quietly retracts once the section has fully settled into view.
+     Plays once per section per visit; cheap (a single class toggle). */
+  (function initSectionInkTransitions() {
+    var inks = Array.prototype.slice.call(document.querySelectorAll("[data-section-ink]"));
+    if (!inks.length || prefersReduced || !("IntersectionObserver" in window)) return;
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          var el = entry.target;
+          if (entry.isIntersecting && !el.dataset.played) {
+            el.dataset.played = "true";
+            el.classList.add("is-active");
+            window.setTimeout(function () {
+              el.classList.add("is-retracting");
+            }, 2200);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    inks.forEach(function (el) {
+      observer.observe(el);
+    });
   })();
 
   /* ------------------------------------------------------------

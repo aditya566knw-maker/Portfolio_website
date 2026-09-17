@@ -54,8 +54,9 @@
   <!-- CUSTOM CURSOR (desktop only, injected/controlled via JS)      -->
   <!-- ============================================================ -->
   <div id="custom-cursor" class="custom-cursor" aria-hidden="true" hidden>
-    <div class="cursor-dot"></div>
+    <div class="cursor-trail"></div>
     <div class="cursor-ring"></div>
+    <div class="cursor-dot"></div>
   </div>
 
   <!-- ============================================================ -->
@@ -111,10 +112,14 @@
       </div>
 
       <div class="hero-mist" id="hero-mist"></div>
+      <div class="hero-rays" id="hero-rays" aria-hidden="true"></div>
+      <canvas class="hero-particles" id="hero-particles" aria-hidden="true"></canvas>
 
-      <div class="hero-feather" id="hero-feather">
-        <div class="float-anim">
-          <img src="assets/feather-480.webp" alt="" width="480" height="720" />
+      <div class="hero-feather" id="hero-feather" data-cursor="decorative">
+        <div class="hero-feather-parallax" id="hero-feather-parallax">
+          <div class="float-anim">
+            <img src="assets/feather-480.webp" alt="" width="480" height="720" />
+          </div>
         </div>
       </div>
 
@@ -154,6 +159,9 @@
         />
       </div>
       <div class="archive-overlay"></div>
+      <div class="section-ink" data-section-ink aria-hidden="true">
+        <img src="assets/ink-splash-900.webp" alt="" loading="lazy" />
+      </div>
 
       <div class="section-inner archive-grid">
         <div class="archive-intro">
@@ -268,6 +276,9 @@
         />
       </div>
       <div class="work-overlay"></div>
+      <div class="section-ink" data-section-ink aria-hidden="true">
+        <img src="assets/ink-splash-900.webp" alt="" loading="lazy" />
+      </div>
 
       <div class="section-inner">
         <div class="reveal">
@@ -276,7 +287,7 @@
           <p class="section-lead">Each record below opens like a scroll pulled from the shelf — a project, a role, a purpose.</p>
         </div>
 
-        <ol id="work-list" class="work-list">
+        <ol id="work-list" class="work-list" data-cursor="inspect">
           <!-- Populated by script.js from PROJECTS data -->
         </ol>
       </div>

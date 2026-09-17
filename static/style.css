@@ -9,13 +9,20 @@
   --color-ink: #0b0d0c;
   --color-midnight: #111c2a;
   --color-jade: #102c28;
-  --color-parchment: #e8d7b5;
-  --color-gold: #b9934a;
-  --color-gold-soft: #d4b878;
-  --color-crimson: #6e2b2b;
+  --color-jade-panel: rgba(16, 44, 40, 0.55);
+  --color-parchment: #f1e4c6;
+  --color-cream: #e8d7b5;
+  --color-gold: #c9a35c;
+  --color-gold-soft: #e0bd7e;
+  --color-gold-bright: #f0cf8f;
+  --color-crimson: #8a3a3a;
 
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "DM Sans", sans-serif;
+
+  /* Text on imagery: readable without giant opaque boxes */
+  --text-shadow-strong: 0 2px 16px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --text-shadow-soft: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
 
 /* ---------- Reset ---------- */
@@ -92,7 +99,7 @@ a {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.22em;
-  color: rgba(232, 215, 181, 0.8);
+  color: rgba(232, 215, 181, 0.85);
   transition: color 0.3s ease;
 }
 .link-gold::after {
@@ -171,6 +178,16 @@ button:focus-visible,
   background: var(--color-ink);
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
+/* Bug fix: a bare class selector's `display: flex` outranks the
+   `[hidden]` attribute's UA-stylesheet `display: none` at equal
+   specificity order, so once JS sets the `hidden` attribute the loader
+   must still be forced out of the render tree here — otherwise (most
+   visibly under prefers-reduced-motion, which sets `hidden` directly
+   without an opacity fade first) it stays a fully opaque fixed layer
+   covering the entire page. */
+.loader-screen[hidden] {
+  display: none;
+}
 .loader-screen.is-hidden {
   opacity: 0;
   pointer-events: none;
@@ -217,6 +234,10 @@ button:focus-visible,
 
 /* ============================================================
    CUSTOM CURSOR (desktop only)
+   ------------------------------------------------------------
+   A small sharp point + a thin antique-gold ring that trails it,
+   plus a faint ink-drop trail. No giant glow, no lag: the dot
+   tracks the raw pointer position 1:1, only the ring/trail ease.
    ============================================================ */
 .custom-cursor {
   pointer-events: none;
@@ -231,37 +252,80 @@ body.cursor-enabled button {
   left: 0;
   top: 0;
   z-index: 9999;
-  width: 6px;
-  height: 6px;
-  margin-left: -3px;
-  margin-top: -3px;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  margin-top: -2.5px;
   border-radius: 50%;
-  background: var(--color-gold-soft);
+  background: var(--color-gold-bright);
+  box-shadow: 0 0 6px rgba(224, 189, 126, 0.6);
   will-change: transform;
-  transition: transform 0.03s linear;
 }
 .cursor-ring {
   position: fixed;
   left: 0;
   top: 0;
   z-index: 9998;
-  width: 28px;
-  height: 28px;
-  margin-left: -14px;
-  margin-top: -14px;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-top: -13px;
   border-radius: 50%;
-  border: 1px solid rgba(185, 147, 74, 0.45);
+  border: 1px solid rgba(201, 163, 92, 0.55);
   opacity: 0.9;
   will-change: transform;
-  transition: width 0.3s ease-out, height 0.3s ease-out,
-    margin 0.3s ease-out, border-color 0.3s ease-out;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    margin 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s ease, opacity 0.28s ease;
 }
+/* Hovering a clickable element: ring expands subtly */
 .cursor-ring.is-active {
-  width: 46px;
-  height: 46px;
-  margin-left: -23px;
-  margin-top: -23px;
-  border-color: rgba(185, 147, 74, 0.85);
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  margin-top: -22px;
+  border-color: rgba(201, 163, 92, 0.9);
+}
+/* Hovering a project / "open" style element: ring becomes an inspect mark */
+.cursor-ring.is-inspect {
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
+  margin-top: -26px;
+  border-color: rgba(240, 207, 143, 0.9);
+  border-style: dashed;
+}
+/* Hovering decorative artwork: the faintest widen, no color change */
+.cursor-ring.is-decorative {
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  opacity: 0.55;
+}
+/* Pressed state: quick contraction so clicks feel tactile */
+.cursor-ring.is-pressed {
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+}
+
+/* Trailing ink droplet — a single faint particle eased further behind
+   the ring, reinforcing the "brush/ink" identity without noise. */
+.cursor-trail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9997;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: rgba(201, 163, 92, 0.35);
+  will-change: transform;
 }
 
 /* ============================================================
@@ -300,6 +364,7 @@ body.cursor-enabled button {
   font-size: 1.125rem;
   letter-spacing: 0.2em;
   color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
 }
 .nav-links {
   display: none;
@@ -313,6 +378,16 @@ body.cursor-enabled button {
 }
 .nav-links a {
   font-size: 0.75rem;
+  text-shadow: var(--text-shadow-soft);
+}
+/* Active-section indicator: a thin gold underline that stays lit,
+   distinct from the hover underline which animates in on demand. */
+.nav-links a.is-active {
+  color: var(--color-gold-bright);
+}
+.nav-links a.is-active::after {
+  transform: scaleX(1);
+  background: var(--color-gold-bright);
 }
 
 .nav-toggle {
@@ -378,6 +453,7 @@ body.cursor-enabled button {
    ============================================================ */
 .section {
   position: relative;
+  isolation: isolate;
   width: 100%;
   overflow: hidden;
   padding-block: 7rem;
@@ -409,22 +485,25 @@ body.cursor-enabled button {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.4em;
-  color: rgba(212, 184, 120, 0.8);
+  color: var(--color-gold-soft);
+  text-shadow: var(--text-shadow-soft);
 }
 .eyebrow-muted {
-  color: rgba(212, 184, 120, 0.6);
+  color: rgba(224, 189, 126, 0.75);
 }
 .eyebrow-tight {
   letter-spacing: 0.35em;
-  color: rgba(212, 184, 120, 0.7);
+  color: rgba(224, 189, 126, 0.85);
   margin-bottom: 0;
 }
 
 .section-heading {
   margin: 0;
   font-family: var(--font-serif);
+  font-weight: 600;
   font-size: 2.5rem;
   color: var(--color-parchment);
+  text-shadow: var(--text-shadow-strong);
 }
 @media (min-width: 640px) {
   .section-heading {
@@ -438,10 +517,13 @@ body.cursor-enabled button {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.7;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(241, 228, 198, 0.78);
+  text-shadow: var(--text-shadow-soft);
 }
 
-/* Parallax background layer used across Archive / Craft / Work / Contact */
+/* Parallax background layer used across Archive / Craft / Work / Contact.
+   Raised opacity across the board (see per-section rules below) so the
+   artwork itself carries the atmosphere instead of a black layer. */
 .parallax-layer {
   position: absolute;
   inset: 0;
@@ -482,6 +564,42 @@ body.cursor-enabled button {
 }
 
 /* ============================================================
+   SECTION-ENTRY INK TRANSITION
+   ------------------------------------------------------------
+   A once-per-section ink bloom that plays as each chamber of the
+   world is entered, reusing the existing ink-splash asset. Purely
+   decorative (aria-hidden), sits above the artwork, below the text.
+   ============================================================ */
+.section-ink {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+.section-ink img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  max-width: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.3);
+  transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: brightness(0.9);
+}
+.section-ink.is-active img {
+  opacity: 0.16;
+  transform: translate(-50%, -50%) scale(1);
+}
+.section-ink.is-retracting img {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.85);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+/* ============================================================
    HERO — SECTION I: THE GATE
    ============================================================ */
 .hero {
@@ -508,27 +626,53 @@ body.cursor-enabled button {
   opacity: 1;
   transform: scale(1);
 }
+/* "Breathing" scale: an almost imperceptible 1.00 -> 1.03 drift, driven
+   by JS toggling this class on a slow interval (see script.js). Mouse
+   parallax is applied separately, to .hero-bg-img, so the two motions
+   compose instead of fighting over the same transform. */
 .hero-bg.is-drifting {
-  transition: transform 18s ease-in-out;
-  transform: scale(1.06);
+  transition: transform 22s ease-in-out;
+  transform: scale(1.03);
 }
 .hero-bg-img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: -2%;
+  width: 104%;
+  height: 104%;
   object-fit: cover;
   object-position: center 40%;
+  will-change: transform;
 }
+/* Controlled gradients, not a heavy black layer: darken only the edges
+   (top nav clearance + bottom footer clearance) and let a soft radial
+   haze sit behind the text column so the palace artwork stays visible
+   everywhere else. */
 .hero-bg-gradient-top {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(11, 13, 12, 0.7), rgba(11, 13, 12, 0.2) 50%, var(--color-ink));
+  background: linear-gradient(to bottom, rgba(9, 11, 10, 0.55) 0%, transparent 32%);
 }
 .hero-bg-gradient-bottom {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--color-ink), transparent 50%, rgba(11, 13, 12, 0.4));
+  background: linear-gradient(to top, rgba(9, 11, 10, 0.75) 0%, transparent 38%);
+}
+
+/* Localized backdrop behind the hero title: a wide, soft radial haze
+   (not a box) that lifts contrast for the text without flattening the
+   artwork around it. */
+.hero-content::before {
+  content: "";
+  position: absolute;
+  inset: -8% -12%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 42%,
+    rgba(9, 11, 10, 0.62) 0%,
+    rgba(9, 11, 10, 0.38) 45%,
+    transparent 78%
+  );
+  pointer-events: none;
 }
 
 .hero-mist {
@@ -536,8 +680,8 @@ body.cursor-enabled button {
   position: absolute;
   inset-inline: 0;
   bottom: 0;
-  height: 50%;
-  background: linear-gradient(to top, var(--color-ink), rgba(11, 13, 12, 0.4), transparent);
+  height: 42%;
+  background: linear-gradient(to top, rgba(9, 11, 10, 0.55), rgba(9, 11, 10, 0.15), transparent);
   opacity: 0;
   transition: opacity 1.8s ease;
 }
@@ -545,39 +689,85 @@ body.cursor-enabled button {
   opacity: 1;
 }
 
-.hero-feather {
+/* Ambient particle canvas: fine dust / gold motes / drifting petals,
+   confined to the hero. Drawn with vanilla Canvas2D + rAF, throttled,
+   pauses under prefers-reduced-motion. */
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
   pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Light rays: two faint, static-angle gradients suggesting moonlight
+   through the courtyard, breathing very slowly in opacity. */
+.hero-rays {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(115deg, transparent 40%, rgba(224, 189, 126, 0.05) 48%, transparent 58%),
+    linear-gradient(100deg, transparent 55%, rgba(224, 189, 126, 0.04) 62%, transparent 72%);
+  animation: rays-breathe 14s ease-in-out infinite;
+  transition: opacity 2.4s ease 1.2s;
+}
+.hero-rays.is-visible {
+  opacity: 1;
+}
+@keyframes rays-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.hero-feather {
+  pointer-events: auto;
   position: absolute;
   right: 6%;
-  top: 14%;
-  width: 7rem;
+  top: 12%;
+  width: 8rem;
   opacity: 0;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
   transform: translateY(-40px) rotate(-8deg);
-  transition: opacity 1.8s ease, transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 1.8s ease, transform 1.8s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s ease;
+  will-change: transform;
 }
 .hero-feather.is-visible {
-  opacity: 0.9;
+  opacity: 0.95;
   transform: translateY(0) rotate(0deg);
+}
+.hero-feather:hover {
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 18px rgba(224, 189, 126, 0.35));
+}
+/* Mouse-parallax wrapper: kept separate from .hero-feather (which owns
+   the intro transition) and .float-anim (which owns the CSS drift
+   keyframe) so all three transforms compose without fighting. */
+.hero-feather-parallax {
+  will-change: transform;
 }
 @media (min-width: 640px) {
   .hero-feather {
-    width: 9rem;
+    width: 10rem;
   }
 }
 @media (min-width: 768px) {
   .hero-feather {
-    right: 10%;
-    width: 11rem;
+    right: 11%;
+    width: 12.5rem;
   }
 }
 @media (min-width: 1024px) {
   .hero-feather {
-    width: 13rem;
+    width: 14.5rem;
   }
 }
 
 .hero-content {
   position: relative;
+  isolation: isolate;
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -597,12 +787,13 @@ body.cursor-enabled button {
 }
 
 .hero-brand {
-  margin: 0 0 1rem;
+  margin: 0 0 1.1rem;
   font-family: var(--font-sans);
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.5em;
-  color: rgba(212, 184, 120, 0.9);
+  color: var(--color-gold-soft);
+  text-shadow: var(--text-shadow-soft);
 }
 @media (min-width: 640px) {
   .hero-brand {
@@ -610,60 +801,71 @@ body.cursor-enabled button {
   }
 }
 
+/* Name — the dominant element. Sharp text, no blur; contrast comes from
+   the radial haze behind it (.hero-content::before), not from a heavy
+   text-shadow, so the letterforms stay crisp. */
 .hero-name {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: 3rem;
+  font-weight: 600;
+  font-size: 3.25rem;
   line-height: 1.05;
   color: var(--color-parchment);
   text-wrap: balance;
+  text-shadow: var(--text-shadow-strong);
 }
 @media (min-width: 640px) {
   .hero-name {
-    font-size: 3.75rem;
+    font-size: 4rem;
   }
 }
 @media (min-width: 768px) {
   .hero-name {
-    font-size: 4.5rem;
+    font-size: 4.75rem;
   }
 }
 @media (min-width: 1024px) {
   .hero-name {
-    font-size: 6rem;
+    font-size: 6.25rem;
   }
 }
 
+/* Professional identity — secondary: brighter than before, clearly
+   readable, still visually subordinate to the name via size/weight. */
 .hero-positioning {
   margin: 1.5rem auto 0;
   max-width: 20rem;
   font-family: var(--font-sans);
-  font-size: 0.6rem;
+  font-weight: 500;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: rgba(232, 215, 181, 0.7);
+  color: var(--color-cream);
+  text-shadow: var(--text-shadow-soft);
 }
 @media (min-width: 640px) {
   .hero-positioning {
     max-width: none;
     white-space: nowrap;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     letter-spacing: 0.25em;
   }
 }
 @media (min-width: 768px) {
   .hero-positioning {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
   }
 }
 
+/* Quote — tertiary: muted cream, italic serif, clearly a supporting line. */
 .hero-statement {
   margin: 1.5rem auto 0;
   max-width: 85vw;
   font-family: var(--font-serif);
   font-size: 1.125rem;
   font-style: italic;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(232, 215, 181, 0.72);
+  text-shadow: var(--text-shadow-soft);
 }
 @media (min-width: 640px) {
   .hero-statement {
@@ -701,18 +903,21 @@ body.cursor-enabled button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(185, 147, 74, 0.5);
+  border: 1px solid rgba(224, 189, 126, 0.7);
+  background: rgba(9, 11, 10, 0.35);
   padding: 0.75rem 2rem;
   font-family: var(--font-sans);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.25em;
   color: var(--color-parchment);
-  transition: border-color 0.5s ease;
+  text-shadow: var(--text-shadow-soft);
+  transition: border-color 0.5s ease, background-color 0.5s ease;
 }
 .btn-fill:hover,
 .btn-fill:focus-visible {
-  border-color: var(--color-gold);
+  border-color: var(--color-gold-bright);
+  background: rgba(9, 11, 10, 0.5);
 }
 .btn-fill span {
   position: relative;
@@ -765,12 +970,18 @@ body.cursor-enabled button {
   background: var(--color-ink);
 }
 .archive-section .parallax-layer {
-  opacity: 0.35;
+  opacity: 0.62;
 }
+/* Controlled gradient instead of a flat black layer: darken only the
+   top/bottom seams (so it blends into the sections above/below) and the
+   left reading column, while leaving the porch/lake artwork visible on
+   the right and through the middle. */
 .archive-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, var(--color-ink), rgba(11, 13, 12, 0.85), var(--color-ink));
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, transparent 14%, transparent 86%, var(--color-ink) 100%),
+    linear-gradient(to right, rgba(9, 11, 10, 0.82) 0%, rgba(9, 11, 10, 0.5) 32%, transparent 62%);
 }
 
 .archive-grid {
@@ -791,7 +1002,8 @@ body.cursor-enabled button {
   font-size: 1.125rem;
   font-style: italic;
   line-height: 1.7;
-  color: rgba(232, 215, 181, 0.7);
+  color: rgba(241, 228, 198, 0.85);
+  text-shadow: var(--text-shadow-soft);
 }
 .archive-intro .body-text {
   margin-top: 1.5rem;
@@ -799,7 +1011,8 @@ body.cursor-enabled button {
   font-family: var(--font-sans);
   font-size: 0.875rem;
   line-height: 1.7;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(241, 228, 198, 0.72);
+  text-shadow: var(--text-shadow-soft);
 }
 
 .education-list {
@@ -830,6 +1043,7 @@ body.cursor-enabled button {
   font-family: var(--font-serif);
   font-size: 1.5rem;
   color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
 }
 @media (min-width: 640px) {
   .education-degree {
@@ -840,7 +1054,7 @@ body.cursor-enabled button {
   margin: 0.25rem 0 0;
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(241, 228, 198, 0.68);
 }
 .education-period {
   margin: 0.25rem 0 0;
@@ -848,17 +1062,17 @@ body.cursor-enabled button {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: rgba(212, 184, 120, 0.7);
+  color: rgba(224, 189, 126, 0.75);
 }
 
 .archive-note {
   position: relative;
   margin-top: 3.5rem;
-  border: 1px solid rgba(185, 147, 74, 0.15);
-  background: rgba(232, 215, 181, 0.03);
+  border: 1px solid rgba(201, 163, 92, 0.22);
+  background: var(--color-jade-panel);
   padding: 2rem;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
 }
 .archive-note-scroll {
   pointer-events: none;
@@ -879,7 +1093,7 @@ body.cursor-enabled button {
   font-family: var(--font-serif);
   font-size: 1.125rem;
   line-height: 1.7;
-  color: rgba(232, 215, 181, 0.8);
+  color: rgba(241, 228, 198, 0.88);
 }
 
 /* ============================================================
@@ -889,23 +1103,28 @@ body.cursor-enabled button {
   background: rgba(16, 44, 40, 0.4);
 }
 .craft-section .parallax-layer {
-  opacity: 0.25;
+  opacity: 0.55;
 }
+/* The study artwork is already moody/dark on its own — a lighter touch
+   here: fade the seams into ink, tint the middle with jade (matching
+   the "deep jade" atmosphere) instead of flattening to black. */
 .craft-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, var(--color-ink), rgba(16, 44, 40, 0.6), var(--color-ink));
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, transparent 18%, transparent 82%, var(--color-ink) 100%),
+    linear-gradient(to right, rgba(16, 44, 40, 0.55) 0%, transparent 55%);
 }
 .craft-botanical {
   left: -4rem;
   top: 2.5rem;
   width: 16rem;
-  opacity: 0.2;
+  opacity: 0.3;
 }
 @media (min-width: 640px) {
   .craft-botanical {
     width: 20rem;
-    opacity: 0.25;
+    opacity: 0.38;
   }
 }
 @media (min-width: 768px) {
@@ -941,7 +1160,8 @@ body.cursor-enabled button {
   text-align: left;
   font-family: var(--font-serif);
   font-size: 1.5rem;
-  color: rgba(232, 215, 181, 0.45);
+  color: rgba(241, 228, 198, 0.55);
+  text-shadow: var(--text-shadow-soft);
   transition: color 0.3s ease, border-color 0.3s ease;
 }
 @media (min-width: 640px) {
@@ -950,7 +1170,7 @@ body.cursor-enabled button {
   }
 }
 .craft-cat-btn:hover {
-  color: rgba(232, 215, 181, 0.8);
+  color: rgba(241, 228, 198, 0.9);
 }
 .craft-cat-btn.is-active {
   border-left-color: var(--color-gold);
@@ -960,11 +1180,9 @@ body.cursor-enabled button {
 .craft-skill-panel {
   position: relative;
   min-height: 280px;
-  border: 1px solid rgba(185, 147, 74, 0.15);
-  background: rgba(11, 13, 12, 0.4);
+  border: 1px solid rgba(201, 163, 92, 0.2);
+  background: var(--color-jade-panel);
   padding: 2rem;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
   animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @media (min-width: 640px) {
@@ -979,11 +1197,12 @@ body.cursor-enabled button {
 }
 .craft-skill-tag {
   position: relative;
-  border: 1px solid rgba(185, 147, 74, 0.25);
+  border: 1px solid rgba(201, 163, 92, 0.3);
+  background: rgba(9, 11, 10, 0.25);
   padding: 0.5rem 1rem;
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  color: rgba(232, 215, 181, 0.8);
+  color: rgba(241, 228, 198, 0.9);
   transition: border-color 0.3s ease, color 0.3s ease;
   animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -1004,23 +1223,28 @@ body.cursor-enabled button {
   background: var(--color-ink);
 }
 .work-section .parallax-layer {
-  opacity: 0.2;
+  opacity: 0.4;
 }
+/* Fade the top/bottom seams into ink so it reads as one continuous
+   world with the sections above/below; keep the hall visible behind
+   the list in between, dimmed just enough for text to win. */
 .work-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, var(--color-ink), rgba(11, 13, 12, 0.9), var(--color-ink));
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, transparent 16%, transparent 84%, var(--color-ink) 100%),
+    rgba(9, 11, 10, 0.45);
 }
 
 .work-list {
   margin-top: 4rem;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid rgba(185, 147, 74, 0.1);
-  border-bottom: 1px solid rgba(185, 147, 74, 0.1);
+  border-top: 1px solid rgba(201, 163, 92, 0.18);
+  border-bottom: 1px solid rgba(201, 163, 92, 0.18);
 }
 .work-list li {
-  border-bottom: 1px solid rgba(185, 147, 74, 0.1);
+  border-bottom: 1px solid rgba(201, 163, 92, 0.18);
 }
 .work-list li:last-child {
   border-bottom: none;
@@ -1031,17 +1255,20 @@ body.cursor-enabled button {
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  padding: 1.75rem 0;
+  padding: 1.75rem 1.25rem;
+  margin-inline: -1.25rem;
   text-align: left;
   transition: background-color 0.3s ease;
 }
 @media (min-width: 640px) {
   .work-item-btn {
-    padding: 2rem 0;
+    padding: 2rem 1.5rem;
+    margin-inline: -1.5rem;
   }
 }
-.work-item-btn:hover {
-  background: rgba(185, 147, 74, 0.03);
+.work-item-btn:hover,
+.work-item-btn:focus-visible {
+  background: rgba(9, 11, 10, 0.55);
 }
 .work-item-left {
   display: flex;
@@ -1056,7 +1283,7 @@ body.cursor-enabled button {
 .work-item-index {
   font-family: var(--font-sans);
   font-size: 0.75rem;
-  color: rgba(212, 184, 120, 0.4);
+  color: rgba(224, 189, 126, 0.55);
   font-variant-numeric: tabular-nums;
 }
 .work-item-name {
@@ -1064,6 +1291,7 @@ body.cursor-enabled button {
   font-family: var(--font-serif);
   font-size: 1.5rem;
   color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
   transition: color 0.3s ease;
 }
 @media (min-width: 640px) {
@@ -1081,7 +1309,7 @@ body.cursor-enabled button {
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: rgba(110, 43, 43, 0.8);
+  color: #c77a7a;
 }
 .work-item-category {
   margin: 0.25rem 0 0;
@@ -1089,7 +1317,7 @@ body.cursor-enabled button {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  color: rgba(232, 215, 181, 0.45);
+  color: rgba(241, 228, 198, 0.6);
 }
 .work-item-open {
   display: none;
@@ -1098,7 +1326,7 @@ body.cursor-enabled button {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: rgba(232, 215, 181, 0.4);
+  color: rgba(241, 228, 198, 0.55);
   transition: color 0.3s ease, letter-spacing 0.3s ease;
 }
 @media (min-width: 640px) {
@@ -1119,9 +1347,9 @@ body.cursor-enabled button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(11, 13, 12, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(9, 11, 10, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   padding: 1rem;
   opacity: 0;
   transition: opacity 0.4s ease;
@@ -1334,7 +1562,8 @@ body.cursor-enabled button {
   font-family: var(--font-serif);
   font-size: 1.25rem;
   font-style: italic;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(241, 228, 198, 0.75);
+  text-shadow: var(--text-shadow-soft);
   max-width: none;
 }
 
@@ -1372,7 +1601,7 @@ body.cursor-enabled button {
 .ai-cap span:last-child {
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  color: rgba(232, 215, 181, 0.75);
+  color: rgba(241, 228, 198, 0.85);
   transition: color 0.3s ease;
 }
 .ai-cap:hover span:last-child {
@@ -1454,7 +1683,7 @@ body.cursor-enabled button {
   margin: 0.25rem 0 0;
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  color: rgba(232, 215, 181, 0.55);
+  color: rgba(241, 228, 198, 0.65);
 }
 
 /* ============================================================
@@ -1482,8 +1711,8 @@ body.cursor-enabled button {
 }
 .certification-card {
   position: relative;
-  border: 1px solid rgba(185, 147, 74, 0.15);
-  background: rgba(232, 215, 181, 0.02);
+  border: 1px solid rgba(201, 163, 92, 0.2);
+  background: var(--color-jade-panel);
   padding: 1.75rem;
   transition: border-color 0.5s ease;
 }
@@ -1525,17 +1754,20 @@ body.cursor-enabled button {
   background: var(--color-ink);
 }
 .contact-section .parallax-layer {
-  opacity: 0.45;
+  opacity: 0.75;
 }
+/* This artwork already has an open, dark night-sky field behind where
+   the text sits — so the overlay only needs to fade the top/bottom
+   seams into ink, not flatten the whole scene. */
 .contact-overlay-top {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, var(--color-ink), rgba(11, 13, 12, 0.6), var(--color-ink));
+  background: linear-gradient(to bottom, var(--color-ink) 0%, transparent 22%);
 }
 .contact-overlay-bottom {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--color-ink), transparent 50%, rgba(11, 13, 12, 0.5));
+  background: linear-gradient(to top, var(--color-ink) 0%, transparent 30%);
 }
 .contact-lantern {
   right: 8%;
@@ -1561,10 +1793,12 @@ body.cursor-enabled button {
 .contact-heading {
   margin: 0;
   font-family: var(--font-serif);
+  font-weight: 600;
   font-size: 2.5rem;
   line-height: 1.2;
   color: var(--color-parchment);
   text-wrap: balance;
+  text-shadow: var(--text-shadow-strong);
 }
 @media (min-width: 640px) {
   .contact-heading {
@@ -1582,7 +1816,8 @@ body.cursor-enabled button {
   font-family: var(--font-serif);
   font-size: 1.25rem;
   font-style: italic;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(241, 228, 198, 0.75);
+  text-shadow: var(--text-shadow-soft);
 }
 .contact-cta {
   margin-top: 3rem;
@@ -1599,7 +1834,8 @@ body.cursor-enabled button {
   font-size: 0.875rem;
   letter-spacing: normal;
   text-transform: none;
-  color: rgba(232, 215, 181, 0.6);
+  color: rgba(241, 228, 198, 0.75);
+  text-shadow: var(--text-shadow-soft);
 }
 
 /* ============================================================
@@ -1694,6 +1930,31 @@ body.cursor-enabled button {
 }
 
 /* ============================================================
+   RESPONSIVE MOTION SCALING
+   ------------------------------------------------------------
+   Tablet: dial back parallax/particles. Mobile: simplify further —
+   the JS layer also checks matchMedia to skip the heavier rAF work
+   entirely below 640px, this is the visual backstop.
+   ============================================================ */
+@media (max-width: 1023px) {
+  .hero-particles {
+    opacity: 0.45;
+  }
+}
+@media (max-width: 639px) {
+  .hero-particles,
+  .hero-rays {
+    display: none;
+  }
+  .craft-botanical {
+    display: none;
+  }
+  .section-ink {
+    display: none;
+  }
+}
+
+/* ============================================================
    REDUCED MOTION
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
@@ -1716,5 +1977,17 @@ body.cursor-enabled button {
   .hero-cta {
     opacity: 1 !important;
     transform: none !important;
+  }
+
+  /* Kill continuous/ambient motion entirely: particles, light rays,
+     breathing scale, ink-transition blooms, floating/sway loops. */
+  .hero-particles,
+  .hero-rays,
+  .section-ink {
+    display: none !important;
+  }
+  .float-anim,
+  .sway-anim {
+    animation: none !important;
   }
 }
