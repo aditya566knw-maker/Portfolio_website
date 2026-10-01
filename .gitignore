@@ -1,3 +1,19 @@
+# Windows system files
+desktop.ini
+Thumbs.db
+
+# macOS
+.DS_Store
+
+# Next.js app build artifacts & dependencies
 web/.next/
+web/out/
+web/build/
 web/node_modules/
-web/tsconfig.tsbuildinfo
+web/.vercel/
+web/*.tsbuildinfo
+web/next-env.d.ts
+
+# Environment files
+web/.env*
+.env*
