@@ -1,0 +1,2333 @@
+/* ============================================================
+   INKOFJATAYU — Aditya Singh Portfolio
+   Static HTML/CSS/JS build (converted from the original Next.js
+   + Tailwind + GSAP implementation, preserving the same design).
+   ============================================================ */
+
+/* ---------- Design tokens ---------- */
+:root {
+  --color-ink: #0b0d0c;
+  --color-midnight: #111c2a;
+  --color-jade: #102c28;
+  --color-jade-panel: rgba(16, 44, 40, 0.55);
+  --color-parchment: #f1e4c6;
+  --color-cream: #e8d7b5;
+  --color-gold: #c9a35c;
+  --color-gold-soft: #e0bd7e;
+  --color-gold-bright: #f0cf8f;
+  --color-crimson: #8a3a3a;
+
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "DM Sans", sans-serif;
+
+  /* Text on imagery: readable without giant opaque boxes */
+  --text-shadow-strong: 0 2px 16px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --text-shadow-soft: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Reset ---------- */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--color-ink);
+  scroll-behavior: smooth;
+}
+
+html.no-smooth-scroll {
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-ink);
+  color: var(--color-parchment);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-ink);
+}
+
+/* ---------- Utility classes ---------- */
+.text-gold {
+  color: var(--color-gold);
+}
+
+.font-serif-display {
+  font-family: var(--font-serif);
+}
+
+/* Gold underline link */
+.link-gold {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: rgba(232, 215, 181, 0.85);
+  transition: color 0.3s ease;
+}
+.link-gold::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.15em;
+  width: 100%;
+  height: 1px;
+  background: var(--color-gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.link-gold:hover,
+.link-gold:focus-visible {
+  color: var(--color-gold-soft);
+}
+.link-gold:hover::after,
+.link-gold:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ---------- Skip link (accessibility) ---------- */
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 200;
+  background: var(--color-ink);
+  color: var(--color-parchment);
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  outline: 1px solid var(--color-gold);
+  transform: translateY(-150%);
+  transition: transform 0.2s ease;
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ---------- Focus visibility ---------- */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 1px solid var(--color-gold);
+  outline-offset: 4px;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(185, 147, 74, 0.35);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(185, 147, 74, 0.6);
+}
+
+/* ============================================================
+   LOADING SCREEN
+   ============================================================ */
+.loader-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ink);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Bug fix: a bare class selector's `display: flex` outranks the
+   `[hidden]` attribute's UA-stylesheet `display: none` at equal
+   specificity order, so once JS sets the `hidden` attribute the loader
+   must still be forced out of the render tree here — otherwise (most
+   visibly under prefers-reduced-motion, which sets `hidden` directly
+   without an opacity fade first) it stays a fully opaque fixed layer
+   covering the entire page. */
+.loader-screen[hidden] {
+  display: none;
+}
+.loader-screen.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.loader-label {
+  margin: 0 0 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: rgba(185, 147, 74, 0.7);
+  opacity: 0;
+  transition: opacity 0.6s ease 0.2s;
+}
+.loader-label.is-visible {
+  opacity: 1;
+}
+.loader-label.is-fading {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.loader-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.9rem;
+  letter-spacing: 0;
+  color: var(--color-parchment);
+  opacity: 0;
+  transition: opacity 0.9s ease, letter-spacing 0.9s ease;
+}
+.loader-title.is-visible {
+  opacity: 1;
+  letter-spacing: 0.35em;
+}
+.loader-title.is-fading {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+@media (min-width: 768px) {
+  .loader-title {
+    font-size: 2.25rem;
+  }
+}
+
+/* ============================================================
+   CUSTOM CURSOR (desktop only)
+   ------------------------------------------------------------
+   A small sharp point + a thin antique-gold ring that trails it,
+   plus a faint ink-drop trail. No giant glow, no lag: the dot
+   tracks the raw pointer position 1:1, only the ring/trail ease.
+   ============================================================ */
+.custom-cursor {
+  pointer-events: none;
+}
+body.cursor-enabled,
+body.cursor-enabled a,
+body.cursor-enabled button {
+  cursor: none;
+}
+.cursor-dot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: var(--color-gold-bright);
+  box-shadow: 0 0 6px rgba(224, 189, 126, 0.6);
+  will-change: transform;
+}
+.cursor-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9998;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-top: -13px;
+  border-radius: 50%;
+  border: 1px solid rgba(201, 163, 92, 0.55);
+  opacity: 0.9;
+  will-change: transform;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    margin 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s ease, opacity 0.28s ease;
+}
+/* Hovering a clickable element: ring expands subtly */
+.cursor-ring.is-active {
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  margin-top: -22px;
+  border-color: rgba(201, 163, 92, 0.9);
+}
+/* Hovering a project / "open" style element: ring becomes an inspect mark */
+.cursor-ring.is-inspect {
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
+  margin-top: -26px;
+  border-color: rgba(240, 207, 143, 0.9);
+  border-style: dashed;
+}
+/* Hovering decorative artwork: the faintest widen, no color change */
+.cursor-ring.is-decorative {
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  opacity: 0.55;
+}
+/* Pressed state: quick contraction so clicks feel tactile */
+.cursor-ring.is-pressed {
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+}
+
+/* Trailing ink droplet — a single faint particle eased further behind
+   the ring, reinforcing the "brush/ink" identity without noise. */
+.cursor-trail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9997;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: rgba(201, 163, 92, 0.35);
+  will-change: transform;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+.site-header {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 50;
+  background: transparent;
+  transition: background-color 0.5s ease, backdrop-filter 0.5s ease,
+    border-color 0.5s ease;
+}
+.site-header.is-scrolled {
+  background: rgba(11, 13, 12, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(185, 147, 74, 0.1);
+}
+.nav {
+  max-width: 80rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+}
+@media (min-width: 768px) {
+  .nav {
+    padding: 1.25rem 2.5rem;
+  }
+}
+.nav-brand {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  letter-spacing: 0.2em;
+  color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
+}
+.nav-links {
+  display: none;
+  align-items: center;
+  gap: 2.25rem;
+}
+@media (min-width: 768px) {
+  .nav-links {
+    display: flex;
+  }
+}
+.nav-links a {
+  font-size: 0.75rem;
+  text-shadow: var(--text-shadow-soft);
+}
+/* Active-section indicator: a thin gold underline that stays lit,
+   distinct from the hover underline which animates in on demand. */
+.nav-links a.is-active {
+  color: var(--color-gold-bright);
+}
+.nav-links a.is-active::after {
+  transform: scaleX(1);
+  background: var(--color-gold-bright);
+}
+
+.nav-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0.5rem;
+}
+@media (min-width: 768px) {
+  .nav-toggle {
+    display: none;
+  }
+}
+.nav-toggle span {
+  display: block;
+  height: 1px;
+  width: 24px;
+  background: var(--color-gold-soft);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-menu {
+  overflow: hidden;
+  max-height: 0;
+  background: rgba(11, 13, 12, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: max-height 0.5s ease-in-out;
+}
+@media (min-width: 768px) {
+  .mobile-menu {
+    display: none;
+  }
+}
+.mobile-menu.is-open {
+  max-height: 24rem;
+}
+.mobile-menu ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 1.5rem 1.5rem;
+}
+.mobile-menu a {
+  display: block;
+  padding: 0.75rem 0;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: rgba(232, 215, 181, 0.9);
+}
+
+/* ============================================================
+   SHARED SECTION LAYOUT
+   ============================================================ */
+.section {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  overflow: hidden;
+  padding-block: 7rem;
+}
+@media (min-width: 768px) {
+  .section {
+    padding-block: 9rem;
+  }
+}
+.section-inner {
+  position: relative;
+  z-index: 10;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding-inline: 1.5rem;
+}
+@media (min-width: 768px) {
+  .section-inner {
+    padding-inline: 2.5rem;
+  }
+}
+.section-inner-narrow {
+  max-width: 56rem;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--color-gold-soft);
+  text-shadow: var(--text-shadow-soft);
+}
+.eyebrow-muted {
+  color: rgba(224, 189, 126, 0.75);
+}
+.eyebrow-tight {
+  letter-spacing: 0.35em;
+  color: rgba(224, 189, 126, 0.85);
+  margin-bottom: 0;
+}
+
+.section-heading {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 2.5rem;
+  color: var(--color-parchment);
+  text-shadow: var(--text-shadow-strong);
+}
+@media (min-width: 640px) {
+  .section-heading {
+    font-size: 3rem;
+  }
+}
+
+.section-lead {
+  margin-top: 1.25rem;
+  max-width: 32rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: rgba(241, 228, 198, 0.78);
+  text-shadow: var(--text-shadow-soft);
+}
+
+/* Parallax background layer used across Archive / Craft / Work / Contact.
+   Raised opacity across the board (see per-section rules below) so the
+   artwork itself carries the atmosphere instead of a black layer. */
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.parallax-layer .parallax-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  will-change: transform;
+}
+
+.floating-el {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform;
+}
+.floating-el img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+}
+
+/* Scroll-reveal base state (progressively enhanced by JS/IntersectionObserver) */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   SECTION-ENTRY INK TRANSITION
+   ------------------------------------------------------------
+   A once-per-section ink bloom that plays as each chamber of the
+   world is entered, reusing the existing ink-splash asset. Purely
+   decorative (aria-hidden), sits above the artwork, below the text.
+   ============================================================ */
+.section-ink {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+.section-ink img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140%;
+  max-width: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.3);
+  transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: brightness(0.9);
+}
+.section-ink.is-active img {
+  opacity: 0.16;
+  transform: translate(-50%, -50%) scale(1);
+}
+.section-ink.is-retracting img {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.85);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+/* ============================================================
+   HERO — SECTION I: THE GATE
+   ============================================================ */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100svh;
+  min-height: 640px;
+  overflow: hidden;
+  background: var(--color-ink);
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.08);
+  transition: opacity 2.4s cubic-bezier(0.33, 1, 0.68, 1),
+    transform 2.4s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.hero-bg.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+/* "Breathing" scale: an almost imperceptible 1.00 -> 1.03 drift, driven
+   by JS toggling this class on a slow interval (see script.js). Mouse
+   parallax is applied separately, to .hero-bg-img, so the two motions
+   compose instead of fighting over the same transform. */
+.hero-bg.is-drifting {
+  transition: transform 22s ease-in-out;
+  transform: scale(1.03);
+}
+.hero-bg-img {
+  position: absolute;
+  inset: -2%;
+  width: 104%;
+  height: 104%;
+  object-fit: cover;
+  object-position: center 40%;
+  will-change: transform;
+}
+/* Controlled gradients, not a heavy black layer: darken only the edges
+   (top nav clearance + bottom footer clearance) and let a soft radial
+   haze sit behind the text column so the palace artwork stays visible
+   everywhere else. */
+.hero-bg-gradient-top {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(9, 11, 10, 0.55) 0%, transparent 32%);
+}
+.hero-bg-gradient-bottom {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(9, 11, 10, 0.75) 0%, transparent 38%);
+}
+
+/* Localized backdrop behind the hero title: a wide, soft radial haze
+   (not a box) that lifts contrast for the text without flattening the
+   artwork around it. */
+.hero-content::before {
+  content: "";
+  position: absolute;
+  inset: -8% -12%;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 42%,
+    rgba(9, 11, 10, 0.62) 0%,
+    rgba(9, 11, 10, 0.38) 45%,
+    transparent 78%
+  );
+  pointer-events: none;
+}
+
+.hero-mist {
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 42%;
+  background: linear-gradient(to top, rgba(9, 11, 10, 0.55), rgba(9, 11, 10, 0.15), transparent);
+  opacity: 0;
+  transition: opacity 1.8s ease;
+}
+.hero-mist.is-visible {
+  opacity: 1;
+}
+
+/* Light rays: two faint, static-angle gradients suggesting moonlight
+   through the courtyard, breathing very slowly in opacity. */
+.hero-rays {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(115deg, transparent 40%, rgba(224, 189, 126, 0.05) 48%, transparent 58%),
+    linear-gradient(100deg, transparent 55%, rgba(224, 189, 126, 0.04) 62%, transparent 72%);
+  animation: rays-breathe 14s ease-in-out infinite;
+  transition: opacity 2.4s ease 1.2s;
+}
+.hero-rays.is-visible {
+  opacity: 1;
+}
+@keyframes rays-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.hero-feather {
+  pointer-events: auto;
+  position: absolute;
+  right: 6%;
+  top: 12%;
+  width: 8rem;
+  opacity: 0;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55));
+  transform: translateY(-40px) rotate(-8deg);
+  transition: opacity 1.8s ease, transform 1.8s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s ease;
+  will-change: transform;
+}
+.hero-feather.is-visible {
+  opacity: 0.95;
+  transform: translateY(0) rotate(0deg);
+}
+.hero-feather:hover {
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 18px rgba(224, 189, 126, 0.35));
+}
+/* Mouse-parallax wrapper: kept separate from .hero-feather (which owns
+   the intro transition) and .float-anim (which owns the CSS drift
+   keyframe) so all three transforms compose without fighting. */
+.hero-feather-parallax {
+  will-change: transform;
+}
+
+/* Feather as transition actor: played once when a hero CTA sends the
+   visitor into a major section change. The feather drifts up and
+   across the viewport as if caught by the same motion carrying the
+   reader forward, then the hero fades under it. Reserved for that one
+   deliberate moment — not replayed on ordinary scroll. */
+.hero-feather.is-departing {
+  transition: opacity 1.6s ease, transform 1.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translate(-18vw, -30vh) rotate(-24deg) scale(1.15);
+  opacity: 0;
+}
+@media (min-width: 640px) {
+  .hero-feather {
+    width: 10rem;
+  }
+}
+@media (min-width: 768px) {
+  .hero-feather {
+    right: 11%;
+    width: 12.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-feather {
+    width: 14.5rem;
+  }
+}
+
+.hero-content {
+  position: relative;
+  isolation: isolate;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-inline: 1.5rem;
+  text-align: center;
+}
+
+.hero-title {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero-title.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-brand {
+  margin: 0 0 1.1rem;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5em;
+  color: var(--color-gold-soft);
+  text-shadow: var(--text-shadow-soft);
+}
+@media (min-width: 640px) {
+  .hero-brand {
+    font-size: 0.75rem;
+  }
+}
+
+/* Name — the dominant element. Sharp text, no blur; contrast comes from
+   the radial haze behind it (.hero-content::before), not from a heavy
+   text-shadow, so the letterforms stay crisp. */
+.hero-name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 3.25rem;
+  line-height: 1.05;
+  color: var(--color-parchment);
+  text-wrap: balance;
+  text-shadow: var(--text-shadow-strong);
+}
+@media (min-width: 640px) {
+  .hero-name {
+    font-size: 4rem;
+  }
+}
+@media (min-width: 768px) {
+  .hero-name {
+    font-size: 4.75rem;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-name {
+    font-size: 6.25rem;
+  }
+}
+
+/* Professional identity — secondary: brighter than before, clearly
+   readable, still visually subordinate to the name via size/weight. */
+.hero-positioning {
+  margin: 1.5rem auto 0;
+  max-width: 20rem;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-cream);
+  text-shadow: var(--text-shadow-soft);
+}
+@media (min-width: 640px) {
+  .hero-positioning {
+    max-width: none;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+  }
+}
+@media (min-width: 768px) {
+  .hero-positioning {
+    font-size: 0.9rem;
+  }
+}
+
+/* Quote — tertiary: muted cream, italic serif, clearly a supporting line. */
+.hero-statement {
+  margin: 1.5rem auto 0;
+  max-width: 85vw;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-style: italic;
+  color: rgba(232, 215, 181, 0.72);
+  text-shadow: var(--text-shadow-soft);
+}
+@media (min-width: 640px) {
+  .hero-statement {
+    max-width: 28rem;
+    font-size: 1.25rem;
+  }
+}
+
+.hero-cta {
+  pointer-events: none;
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 1s ease, transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero-cta.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+@media (min-width: 640px) {
+  .hero-cta {
+    flex-direction: row;
+    gap: 2rem;
+  }
+}
+
+.btn-fill {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(224, 189, 126, 0.7);
+  background: rgba(9, 11, 10, 0.35);
+  padding: 0.75rem 2rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
+  transition: border-color 0.5s ease, background-color 0.5s ease;
+}
+.btn-fill:hover,
+.btn-fill:focus-visible {
+  border-color: var(--color-gold-bright);
+  background: rgba(9, 11, 10, 0.5);
+}
+.btn-fill span {
+  position: relative;
+  z-index: 1;
+  transition: color 0.5s ease;
+}
+.btn-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-gold);
+  transform: translateX(-100%);
+  transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.btn-fill:hover::before,
+.btn-fill:focus-visible::before {
+  transform: translateX(0);
+}
+.btn-fill:hover span,
+.btn-fill:focus-visible span {
+  color: var(--color-ink);
+}
+
+.btn-text {
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+}
+
+.hero-scroll-cue {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  z-index: 10;
+  transform: translateX(-50%);
+  opacity: 0.6;
+  width: 1px;
+  height: 2.5rem;
+  background: linear-gradient(to bottom, var(--color-gold), transparent);
+  animation: pulse-fade 2.4s ease-in-out infinite;
+}
+@keyframes pulse-fade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.15; }
+}
+
+/* ============================================================
+   SECTION II — THE ARCHIVE
+   ============================================================ */
+.archive-section {
+  background: var(--color-ink);
+}
+.archive-section .parallax-layer {
+  opacity: 0.62;
+}
+/* Controlled gradient instead of a flat black layer: darken only the
+   top/bottom seams (so it blends into the sections above/below) and the
+   left reading column, while leaving the porch/lake artwork visible on
+   the right and through the middle. */
+.archive-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, transparent 14%, transparent 86%, var(--color-ink) 100%),
+    linear-gradient(to right, rgba(9, 11, 10, 0.82) 0%, rgba(9, 11, 10, 0.5) 32%, transparent 62%);
+}
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4rem;
+}
+@media (min-width: 768px) {
+  .archive-grid {
+    grid-template-columns: 5fr 7fr;
+  }
+}
+
+.archive-intro .quote-text {
+  margin-top: 1.5rem;
+  max-width: 28rem;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-style: italic;
+  line-height: 1.7;
+  color: rgba(241, 228, 198, 0.85);
+  text-shadow: var(--text-shadow-soft);
+}
+.archive-intro .body-text {
+  margin-top: 1.5rem;
+  max-width: 28rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: rgba(241, 228, 198, 0.72);
+  text-shadow: var(--text-shadow-soft);
+}
+
+.education-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+.education-item {
+  position: relative;
+  border-left: 1px solid rgba(185, 147, 74, 0.25);
+  padding: 0.25rem 0 0.25rem 2rem;
+}
+.education-marker {
+  position: absolute;
+  left: -5px;
+  top: 0.5rem;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(185, 147, 74, 0.7);
+  transition: background-color 0.3s ease;
+}
+.education-item:hover .education-marker {
+  background: var(--color-gold);
+}
+.education-degree {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
+}
+@media (min-width: 640px) {
+  .education-degree {
+    font-size: 1.875rem;
+  }
+}
+.education-school {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: rgba(241, 228, 198, 0.68);
+}
+.education-period {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(224, 189, 126, 0.75);
+}
+
+.archive-note {
+  position: relative;
+  margin-top: 3.5rem;
+  border: 1px solid rgba(201, 163, 92, 0.22);
+  background: var(--color-jade-panel);
+  padding: 2rem;
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+.archive-note-scroll {
+  pointer-events: none;
+  position: absolute;
+  right: -1.5rem;
+  top: -2.5rem;
+  width: 6rem;
+  opacity: 0.7;
+}
+@media (min-width: 640px) {
+  .archive-note-scroll {
+    width: 7rem;
+  }
+}
+.archive-note p {
+  margin: 0;
+  max-width: 24rem;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: rgba(241, 228, 198, 0.88);
+}
+
+/* ============================================================
+   SECTION III — THE CRAFT
+   ============================================================ */
+.craft-section {
+  background: rgba(16, 44, 40, 0.4);
+}
+.craft-section .parallax-layer {
+  opacity: 0.55;
+}
+/* The study artwork is already moody/dark on its own — a lighter touch
+   here: fade the seams into ink, tint the middle with jade (matching
+   the "deep jade" atmosphere) instead of flattening to black. */
+.craft-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, transparent 18%, transparent 82%, var(--color-ink) 100%),
+    linear-gradient(to right, rgba(16, 44, 40, 0.55) 0%, transparent 55%);
+}
+.craft-botanical {
+  left: -4rem;
+  top: 2.5rem;
+  width: 16rem;
+  opacity: 0.3;
+}
+@media (min-width: 640px) {
+  .craft-botanical {
+    width: 20rem;
+    opacity: 0.38;
+  }
+}
+@media (min-width: 768px) {
+  .craft-botanical {
+    width: 26rem;
+  }
+}
+
+.craft-layout {
+  margin-top: 4rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+@media (min-width: 1024px) {
+  .craft-layout {
+    grid-template-columns: 4fr 8fr;
+  }
+}
+
+.craft-categories ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-left: 1px solid rgba(185, 147, 74, 0.15);
+}
+.craft-cat-btn {
+  display: block;
+  width: 100%;
+  margin-left: -1px;
+  border-left: 1px solid transparent;
+  padding: 0.75rem 1rem 0.75rem 1.5rem;
+  text-align: left;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: rgba(241, 228, 198, 0.55);
+  text-shadow: var(--text-shadow-soft);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+@media (min-width: 640px) {
+  .craft-cat-btn {
+    font-size: 1.875rem;
+  }
+}
+.craft-cat-btn:hover {
+  color: rgba(241, 228, 198, 0.9);
+}
+.craft-cat-btn.is-active {
+  border-left-color: var(--color-gold);
+  color: var(--color-gold-soft);
+}
+
+.craft-skill-panel {
+  position: relative;
+  min-height: 280px;
+  border: 1px solid rgba(201, 163, 92, 0.2);
+  background: var(--color-jade-panel);
+  padding: 2rem;
+  animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 640px) {
+  .craft-skill-panel {
+    padding: 2.5rem;
+  }
+}
+.craft-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 0.75rem;
+}
+.craft-skill-tag {
+  position: relative;
+  border: 1px solid rgba(201, 163, 92, 0.3);
+  background: rgba(9, 11, 10, 0.25);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: rgba(241, 228, 198, 0.9);
+  transition: border-color 0.3s ease, color 0.3s ease;
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.craft-skill-tag:hover {
+  border-color: var(--color-gold);
+  color: var(--color-gold-soft);
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   SECTION IV — THE WORK
+   ============================================================ */
+.work-section {
+  background: var(--color-ink);
+}
+.work-section .parallax-layer {
+  opacity: 0.4;
+}
+/* Fade the top/bottom seams into ink so it reads as one continuous
+   world with the sections above/below; keep the hall visible behind
+   the list in between, dimmed just enough for text to win. */
+.work-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, var(--color-ink) 0%, transparent 16%, transparent 84%, var(--color-ink) 100%),
+    rgba(9, 11, 10, 0.45);
+}
+
+.work-list {
+  margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(201, 163, 92, 0.18);
+  border-bottom: 1px solid rgba(201, 163, 92, 0.18);
+}
+.work-list li {
+  border-bottom: 1px solid rgba(201, 163, 92, 0.18);
+}
+.work-list li:last-child {
+  border-bottom: none;
+}
+.work-item-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.75rem 1.25rem;
+  margin-inline: -1.25rem;
+  text-align: left;
+  transition: background-color 0.3s ease;
+}
+@media (min-width: 640px) {
+  .work-item-btn {
+    padding: 2rem 1.5rem;
+    margin-inline: -1.5rem;
+  }
+}
+.work-item-btn:hover,
+.work-item-btn:focus-visible {
+  background: rgba(9, 11, 10, 0.55);
+}
+.work-item-left {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .work-item-left {
+    gap: 2rem;
+  }
+}
+.work-item-index {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: rgba(224, 189, 126, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+.work-item-name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-parchment);
+  text-shadow: var(--text-shadow-soft);
+  transition: color 0.3s ease;
+}
+@media (min-width: 640px) {
+  .work-item-name {
+    font-size: 1.875rem;
+  }
+}
+.work-item-btn:hover .work-item-name {
+  color: var(--color-gold-soft);
+}
+.work-item-featured {
+  margin-left: 0.75rem;
+  vertical-align: middle;
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #c77a7a;
+}
+.work-item-category {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(241, 228, 198, 0.6);
+}
+.work-item-open {
+  display: none;
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(241, 228, 198, 0.55);
+  transition: color 0.3s ease, letter-spacing 0.3s ease;
+}
+@media (min-width: 640px) {
+  .work-item-open {
+    display: inline;
+  }
+}
+.work-item-btn:hover .work-item-open {
+  color: var(--color-gold-soft);
+  letter-spacing: 0.3em;
+}
+
+/* Project viewer modal */
+.project-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(9, 11, 10, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+@media (min-width: 640px) {
+  .project-viewer {
+    padding: 2rem;
+  }
+}
+.project-viewer.is-visible {
+  opacity: 1;
+}
+.project-viewer[hidden] {
+  display: none;
+}
+
+.project-viewer-scroll {
+  position: relative;
+  max-height: 85vh;
+  width: 100%;
+  max-width: 42rem;
+  overflow-y: auto;
+  border: 1px solid rgba(185, 147, 74, 0.25);
+  background: var(--color-ink);
+  padding: 2.5rem 1.75rem;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transform: scaleY(0.85) translateY(20px);
+  transform-origin: top center;
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.33, 1, 0.68, 1);
+}
+@media (min-width: 640px) {
+  .project-viewer-scroll {
+    padding: 3.5rem 3rem;
+  }
+}
+.project-viewer.is-visible .project-viewer-scroll {
+  opacity: 1;
+  transform: scaleY(1) translateY(0);
+}
+
+.project-viewer-texture {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(232, 215, 181, 0.5) 2px,
+    rgba(232, 215, 181, 0.5) 3px
+  );
+}
+
+.project-viewer-close {
+  position: absolute;
+  right: 1.25rem;
+  top: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(232, 215, 181, 0.6);
+  transition: color 0.3s ease;
+}
+.project-viewer-close:hover {
+  color: var(--color-gold-soft);
+}
+
+.project-viewer-title {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  color: var(--color-parchment);
+}
+@media (min-width: 640px) {
+  .project-viewer-title {
+    font-size: 3rem;
+  }
+}
+.project-viewer-role {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(232, 215, 181, 0.5);
+}
+.project-viewer-description {
+  margin: 2rem 0 0;
+  max-width: 32rem;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: rgba(232, 215, 181, 0.8);
+}
+.project-viewer-block {
+  margin-top: 2rem;
+}
+.project-viewer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.project-viewer-tools span {
+  border: 1px solid rgba(185, 147, 74, 0.2);
+  padding: 0.375rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: rgba(232, 215, 181, 0.7);
+}
+.project-viewer-purpose {
+  border-top: 1px solid rgba(185, 147, 74, 0.1);
+  padding-top: 1.5rem;
+}
+.project-viewer-outcome {
+  margin: 0.5rem 0 0;
+  max-width: 32rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: rgba(232, 215, 181, 0.65);
+}
+.project-viewer-nav {
+  margin-top: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(185, 147, 74, 0.1);
+  padding-top: 1.5rem;
+}
+.project-viewer-nav button {
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+   SECTION V — THE AI LAB
+   ============================================================ */
+.ai-lab-section {
+  background: var(--color-midnight);
+  padding-block: 8rem;
+}
+@media (min-width: 768px) {
+  .ai-lab-section {
+    padding-block: 11rem;
+  }
+}
+.ai-lab-radial {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(17, 28, 42, 0.4), transparent 60%);
+}
+.ai-lab-fade-top,
+.ai-lab-fade-bottom {
+  position: absolute;
+  inset-inline: 0;
+  height: 8rem;
+}
+.ai-lab-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--color-ink), transparent);
+}
+.ai-lab-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-ink), transparent);
+}
+
+.ai-lab-ink {
+  --ink-scale: 0.7;
+  --ink-rotate: -6deg;
+  --ink-center-y: 0;
+  pointer-events: none;
+  position: absolute;
+  right: -35%;
+  top: 2rem;
+  width: 160%;
+  opacity: 0;
+  transform: translateY(var(--ink-center-y)) scale(var(--ink-scale)) rotate(var(--ink-rotate));
+}
+.ai-lab-ink img {
+  opacity: 0.4;
+}
+@media (min-width: 640px) {
+  .ai-lab-ink {
+    --ink-center-y: -50%;
+    right: -5%;
+    top: 50%;
+    width: 90%;
+    transform-origin: center;
+  }
+  .ai-lab-ink img {
+    opacity: 1;
+  }
+}
+@media (min-width: 768px) {
+  .ai-lab-ink {
+    right: 0;
+    width: 70%;
+  }
+}
+@media (min-width: 1024px) {
+  .ai-lab-ink {
+    width: 60%;
+  }
+}
+
+.ai-lab-tagline {
+  margin-top: 1.25rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: rgba(241, 228, 198, 0.75);
+  text-shadow: var(--text-shadow-soft);
+  max-width: none;
+}
+
+.ai-lab-capabilities {
+  margin-top: 4rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem 2.5rem;
+  max-width: 36rem;
+}
+@media (min-width: 640px) {
+  .ai-lab-capabilities {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.ai-cap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(185, 147, 74, 0.1);
+  padding-bottom: 1rem;
+}
+.ai-cap-dot {
+  flex-shrink: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(185, 147, 74, 0.6);
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+.ai-cap:hover .ai-cap-dot {
+  width: 16px;
+  background: var(--color-gold);
+}
+.ai-cap span:last-child {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: rgba(241, 228, 198, 0.85);
+  transition: color 0.3s ease;
+}
+.ai-cap:hover span:last-child {
+  color: var(--color-parchment);
+}
+
+/* ============================================================
+   SECTION VI — THE PATH (Timeline)
+   ============================================================ */
+.path-section {
+  background: var(--color-ink);
+}
+
+.timeline-list {
+  position: relative;
+  margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+  padding-left: 2rem;
+}
+@media (min-width: 640px) {
+  .timeline-list {
+    padding-left: 2.5rem;
+  }
+}
+.timeline-line {
+  position: absolute;
+  left: 3px;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 1px;
+  background: linear-gradient(to bottom, rgba(185, 147, 74, 0.6), rgba(185, 147, 74, 0.2), transparent);
+}
+@media (min-width: 640px) {
+  .timeline-line {
+    left: 5px;
+  }
+}
+.timeline-item {
+  position: relative;
+}
+.timeline-dot {
+  position: absolute;
+  left: -2rem;
+  top: 0.375rem;
+  transform: translateX(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  box-shadow: 0 0 12px rgba(185, 147, 74, 0.6);
+}
+@media (min-width: 640px) {
+  .timeline-dot {
+    left: -2.5rem;
+  }
+}
+.timeline-period {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: rgba(212, 184, 120, 0.7);
+}
+.timeline-title {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--color-parchment);
+}
+@media (min-width: 640px) {
+  .timeline-title {
+    font-size: 1.875rem;
+  }
+}
+.timeline-org {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: rgba(241, 228, 198, 0.65);
+}
+
+/* ============================================================
+   SECTION VII — CERTIFICATIONS
+   ============================================================ */
+.certifications-section {
+  background: var(--color-ink);
+  padding-block: 6rem;
+}
+@media (min-width: 768px) {
+  .certifications-section {
+    padding-block: 8rem;
+  }
+}
+.certifications-grid {
+  margin-top: 3.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 640px) {
+  .certifications-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.certification-card {
+  position: relative;
+  border: 1px solid rgba(201, 163, 92, 0.2);
+  background: var(--color-jade-panel);
+  padding: 1.75rem;
+  transition: border-color 0.5s ease;
+}
+.certification-card:hover {
+  border-color: rgba(185, 147, 74, 0.4);
+}
+.certification-texture {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 3px,
+    rgba(232, 215, 181, 0.6) 3px,
+    rgba(232, 215, 181, 0.6) 4px
+  );
+}
+.certification-title {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--color-parchment);
+}
+@media (min-width: 640px) {
+  .certification-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* ============================================================
+   SECTION VIII — CONTACT
+   ============================================================ */
+.contact-section {
+  display: flex;
+  align-items: center;
+  min-height: 90vh;
+  background: var(--color-ink);
+}
+.contact-section .parallax-layer {
+  opacity: 0.75;
+}
+/* This artwork already has an open, dark night-sky field behind where
+   the text sits — so the overlay only needs to fade the top/bottom
+   seams into ink, not flatten the whole scene. */
+.contact-overlay-top {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--color-ink) 0%, transparent 22%);
+}
+.contact-overlay-bottom {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--color-ink) 0%, transparent 30%);
+}
+.contact-lantern {
+  right: 8%;
+  top: 0;
+  width: 6rem;
+}
+@media (min-width: 640px) {
+  .contact-lantern {
+    width: 8rem;
+  }
+}
+@media (min-width: 768px) {
+  .contact-lantern {
+    width: 10rem;
+  }
+}
+
+.contact-inner {
+  width: 100%;
+  max-width: 48rem;
+  text-align: center;
+}
+.contact-heading {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 2.5rem;
+  line-height: 1.2;
+  color: var(--color-parchment);
+  text-wrap: balance;
+  text-shadow: var(--text-shadow-strong);
+}
+@media (min-width: 640px) {
+  .contact-heading {
+    font-size: 3rem;
+  }
+}
+@media (min-width: 768px) {
+  .contact-heading {
+    font-size: 3.75rem;
+  }
+}
+.contact-subheading {
+  margin: 1.5rem auto 0;
+  max-width: 28rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: rgba(241, 228, 198, 0.75);
+  text-shadow: var(--text-shadow-soft);
+}
+.contact-cta {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+.contact-cta .btn-fill {
+  padding: 1rem 2.5rem;
+  letter-spacing: 0.3em;
+}
+.contact-email {
+  font-size: 0.875rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: rgba(241, 228, 198, 0.75);
+  text-shadow: var(--text-shadow-soft);
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid rgba(185, 147, 74, 0.1);
+  background: var(--color-ink);
+  padding: 3rem 1.5rem;
+}
+@media (min-width: 768px) {
+  .site-footer {
+    padding: 3rem 2.5rem;
+  }
+}
+.footer-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .footer-inner {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+.footer-brand {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  letter-spacing: 0.15em;
+  color: var(--color-parchment);
+}
+.footer-name {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(232, 215, 181, 0.5);
+}
+.footer-tagline {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: rgba(232, 215, 181, 0.35);
+}
+.footer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .footer-meta {
+    align-items: flex-end;
+  }
+}
+.footer-copyright {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: rgba(232, 215, 181, 0.3);
+}
+
+/* ============================================================
+   MOTION HELPERS
+   ============================================================ */
+.float-anim {
+  animation: drift 12s ease-in-out infinite;
+  transform-origin: 50% 0%;
+}
+.sway-anim {
+  animation: sway 7s ease-in-out infinite;
+  transform-origin: 50% 0%;
+}
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -14px, 0) rotate(0.6deg); }
+}
+@keyframes sway {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50% { transform: rotate(1.4deg); }
+}
+
+/* ============================================================
+   RESPONSIVE MOTION SCALING
+   ------------------------------------------------------------
+   Tablet: dial back parallax/particles. Mobile: simplify further —
+   the JS layer also checks matchMedia to skip the heavier rAF work
+   entirely below 640px, this is the visual backstop. (World-engine
+   canvas opacity is scaled separately, further down.)
+   ============================================================ */
+@media (max-width: 639px) {
+  .hero-rays {
+    display: none;
+  }
+  .craft-botanical {
+    display: none;
+  }
+  .section-ink {
+    display: none;
+  }
+}
+
+/* ============================================================
+   LIVING WORLD ENGINE
+   ------------------------------------------------------------
+   A single full-viewport canvas (fixed, behind content, above
+   section backgrounds) that renders the shared wind/particle/leaf
+   system across the whole page. One rAF loop, one canvas — cheap
+   compared to per-section canvases, and lets leaves drift from one
+   chamber into the next as the visitor scrolls.
+   ============================================================ */
+.world-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   LANTERNS — interactive environmental light sources
+   ============================================================ */
+.lantern-glow {
+  position: absolute;
+  inset: -60% -60%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 189, 126, 0.28) 0%, rgba(224, 189, 126, 0.1) 40%, transparent 72%);
+  opacity: 0.7;
+  animation: lantern-flicker 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes lantern-flicker {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  38% { opacity: 0.8; transform: scale(1.04); }
+  52% { opacity: 0.62; transform: scale(0.99); }
+  70% { opacity: 0.75; transform: scale(1.02); }
+  85% { opacity: 0.6; transform: scale(1); }
+}
+.contact-lantern {
+  position: absolute;
+}
+.contact-lantern .sway-anim {
+  position: relative;
+}
+
+/* Hero lantern light spots: two small radial breathing accents placed
+   over the existing painted lanterns (left stone lantern, right
+   hanging lantern), reinforcing them as light sources without adding
+   a new visible object. */
+.hero-lantern-spot {
+  position: absolute;
+  width: 14%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 189, 126, 0.22) 0%, transparent 68%);
+  animation: lantern-flicker 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.hero-lantern-spot--left {
+  left: 3%;
+  top: 62%;
+  animation-delay: -1.5s;
+}
+.hero-lantern-spot--right {
+  right: 5%;
+  top: 6%;
+  animation-delay: -3.2s;
+}
+
+/* ============================================================
+   RIPPLES & DUST PUFFS — environment reaction points
+   ------------------------------------------------------------
+   Spawned by JS at the (x, y) a leaf/particle "lands" on water or
+   ground. Pure CSS keyframe, DOM node removes itself after.
+   ============================================================ */
+.env-ripple {
+  position: fixed;
+  z-index: 4;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  border-radius: 50%;
+  border: 1px solid rgba(224, 189, 126, 0.5);
+  pointer-events: none;
+  animation: ripple-expand 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes ripple-expand {
+  0% { width: 4px; height: 4px; margin-left: -2px; margin-top: -2px; opacity: 0.55; border-width: 1.5px; }
+  100% { width: 90px; height: 34px; margin-left: -45px; margin-top: -17px; opacity: 0; border-width: 0.5px; }
+}
+.env-dust {
+  position: fixed;
+  z-index: 4;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  margin-top: -1.5px;
+  border-radius: 50%;
+  background: rgba(201, 163, 92, 0.55);
+  pointer-events: none;
+  animation: dust-puff 0.9s ease-out forwards;
+}
+@keyframes dust-puff {
+  0% { transform: translate(0, 0); opacity: 0.6; }
+  100% { transform: translate(var(--dust-x, 10px), var(--dust-y, -6px)); opacity: 0; }
+}
+
+/* ============================================================
+   THE WORK — archive rows that respond to the reader
+   ============================================================ */
+.work-item-btn {
+  position: relative;
+}
+.work-item-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(201, 163, 92, 0.1), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+.work-item-btn:hover::before,
+.work-item-btn:focus-visible::before {
+  opacity: 1;
+}
+.work-item-btn:hover .work-item-name,
+.work-item-btn:focus-visible .work-item-name {
+  transform: translateX(6px);
+}
+.work-item-name {
+  display: inline-block;
+  transition: color 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Project detail panel — reframed as an archive record, not a modal */
+.project-viewer-scroll {
+  position: relative;
+}
+.project-viewer-scroll::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(201, 163, 92, 0.06), transparent 18%);
+  pointer-events: none;
+}
+.project-viewer-seal {
+  position: absolute;
+  left: 1.75rem;
+  top: 1.25rem;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(201, 163, 92, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: rgba(224, 189, 126, 0.8);
+  opacity: 0.85;
+}
+@media (min-width: 640px) {
+  .project-viewer-seal {
+    left: 2.75rem;
+    top: 2rem;
+  }
+}
+
+/* ============================================================
+   THE CRAFT — apothecary-style skill discovery
+   ============================================================ */
+.craft-skill-tag {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.craft-skill-tag .skill-symbol {
+  display: inline-block;
+  margin-right: 0.5em;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  opacity: 0.6;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.craft-skill-tag:hover .skill-symbol,
+.craft-skill-tag.is-discovered .skill-symbol {
+  opacity: 1;
+  transform: rotate(8deg) scale(1.1);
+}
+.craft-skill-tag .skill-note {
+  display: block;
+  max-height: 0;
+  overflow: hidden;
+  margin-top: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: rgba(224, 189, 126, 0.75);
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+.craft-skill-tag.is-discovered .skill-note {
+  max-height: 3rem;
+  margin-top: 0.35rem;
+  opacity: 1;
+}
+
+/* ============================================================
+   THE AI LAB — floating nodes + connections (ancient x modern)
+   ============================================================ */
+.ai-lab-nodes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ============================================================
+   THE PATH — atmospheric depth instead of empty black space
+   ============================================================ */
+.path-section {
+  min-height: 70vh;
+}
+.path-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.8;
+}
+.path-silhouette {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 45%;
+  background:
+    linear-gradient(to top, rgba(9, 11, 10, 0.9), transparent),
+    radial-gradient(ellipse 70% 100% at 20% 100%, rgba(16, 44, 40, 0.5), transparent 60%),
+    radial-gradient(ellipse 50% 80% at 80% 100%, rgba(16, 44, 40, 0.4), transparent 55%);
+  opacity: 0.7;
+}
+.timeline-line {
+  transform-origin: top;
+  transform: scaleY(0);
+  transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.timeline-line.is-visible {
+  transform: scaleY(1);
+}
+
+/* ============================================================
+   CERTIFICATIONS — archive documents, not SaaS cards
+   ============================================================ */
+.certification-card {
+  transition: border-color 0.5s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.5s ease;
+}
+.certification-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+.certification-card .certification-texture {
+  transition: opacity 0.5s ease;
+}
+.certification-card:hover .certification-texture {
+  opacity: 0.06;
+}
+.certification-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  background: linear-gradient(120deg, rgba(224, 189, 126, 0.5), transparent 40%) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.certification-card:hover::after {
+  opacity: 1;
+}
+.certification-ink {
+  position: absolute;
+  right: -1rem;
+  bottom: -1rem;
+  width: 5rem;
+  height: 5rem;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(16, 44, 40, 0.6), transparent 70%);
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+.certification-card:hover .certification-ink {
+  opacity: 1;
+}
+
+/* ============================================================
+   FINAL COURTYARD — contact section water reflection
+   ============================================================ */
+.contact-water-shimmer {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 30%;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(224, 189, 126, 0.05), transparent);
+  opacity: 0;
+  animation: shimmer-breathe 8s ease-in-out infinite;
+}
+@keyframes shimmer-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.55; }
+}
+
+/* ============================================================
+   RESPONSIVE MOTION SCALING (world engine)
+   ============================================================ */
+@media (max-width: 1023px) {
+  .world-canvas {
+    opacity: 0.6;
+  }
+}
+@media (max-width: 639px) {
+  .world-canvas {
+    opacity: 0.4;
+  }
+  .lantern-glow {
+    animation-duration: 7s;
+  }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Safety net: force-reveal anything JS would otherwise fade/slide in,
+     even if the reveal script is slow to run or fails. */
+  .reveal,
+  .hero-bg,
+  .hero-mist,
+  .hero-feather,
+  .hero-title,
+  .hero-cta {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Kill continuous/ambient motion entirely: particles, light rays,
+     breathing scale, ink-transition blooms, floating/sway loops. */
+  .hero-rays,
+  .section-ink,
+  .world-canvas,
+  .env-ripple,
+  .env-dust,
+  .ai-lab-nodes,
+  .path-atmosphere,
+  .contact-water-shimmer {
+    display: none !important;
+  }
+  .float-anim,
+  .sway-anim,
+  .lantern-glow,
+  .hero-lantern-spot {
+    animation: none !important;
+  }
+  .timeline-line {
+    transform: scaleY(1) !important;
+  }
+}

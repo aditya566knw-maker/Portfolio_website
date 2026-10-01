@@ -1,41 +1,33 @@
-import { identity, socials } from "@/data/content";
+"use client";
+
+import { useSyncExternalStore } from "react";
+
+/* Footer — the copyright year (script.js §13) is read from the client
+   via useSyncExternalStore so the server renders a stable fallback and
+   the real year appears after hydration without an SSR/CSR mismatch or
+   a setState-in-effect. */
+const emptySubscribe = () => () => {};
 
 export default function Footer() {
-  const year = new Date().getFullYear();
+  const year = useSyncExternalStore(
+    emptySubscribe,
+    () => new Date().getFullYear(),
+    () => 2026
+  );
 
   return (
-    <footer className="relative w-full border-t border-gold/10 bg-ink px-6 py-12 md:px-10">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center sm:flex-row sm:items-end sm:justify-between sm:text-left">
+    <footer className="site-footer">
+      <div className="footer-inner">
         <div>
-          <p className="font-serif-display text-lg tracking-[0.15em] text-parchment">
+          <p className="footer-brand">
             INK<span className="text-gold">OF</span>JATAYU
           </p>
-          <p className="mt-1 font-sans text-xs uppercase tracking-[0.15em] text-parchment/50">
-            {identity.name}
-          </p>
-          <p className="mt-1 font-sans text-xs text-parchment/35">
-            Digital Marketing · Analytics · AI
-          </p>
+          <p className="footer-name">Aditya Singh</p>
+          <p className="footer-tagline">Digital Marketing · Analytics · AI</p>
         </div>
-
-        <div className="flex flex-col items-center gap-4 sm:items-end">
-          {socials.length > 0 && (
-            <div className="flex items-center gap-5">
-              {socials.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-gold cursor-hover font-sans text-xs uppercase tracking-[0.15em] text-parchment/50 hover:text-gold-soft"
-                >
-                  {social.label}
-                </a>
-              ))}
-            </div>
-          )}
-          <p className="font-sans text-xs text-parchment/30">
-            © {year} {identity.name}
+        <div className="footer-meta">
+          <p className="footer-copyright" id="footer-copyright">
+            © {year} Aditya Singh
           </p>
         </div>
       </div>

@@ -1,104 +1,196 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import dynamic from "next/dynamic";
-import Reveal from "./Reveal";
-import ParallaxLayer from "./ParallaxLayer";
-import { projects } from "@/data/projects";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { PROJECTS } from "@/hooks/useInkWorld";
 
-const ProjectViewer = dynamic(() => import("./ProjectViewer"), {
-  ssr: false,
-});
-
+/* The Work section — project list + project viewer modal.
+   Mirrors script.js section 11: list rendering (index padStart,
+   featured span, Open →), open/close viewer, prev/next, keyboard
+   (Esc/←/→), focus management, body overflow lock, hover sparkle. */
 export default function Work() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
 
-  const close = useCallback(() => setActiveIndex(null), []);
-  const next = useCallback(
-    () => setActiveIndex((i) => (i === null ? null : (i + 1) % projects.length)),
-    []
-  );
-  const prev = useCallback(
-    () =>
-      setActiveIndex((i) =>
-        i === null ? null : (i - 1 + projects.length) % projects.length
-      ),
-    []
-  );
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isCoarse = () =>
+    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
-  const active = activeIndex !== null ? projects[activeIndex] : null;
+  const open = useCallback((index: number) => {
+    if (typeof document !== "undefined") {
+      lastFocusedRef.current = document.activeElement as HTMLElement | null;
+      document.body.style.overflow = "hidden";
+    }
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+    setActiveIndex(index);
+    // Let the element mount (hidden removed), then add is-visible so the
+    // opacity/transform transition runs — mirrors the forced reflow.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsVisible(true));
+    });
+  }, []);
+
+  const close = useCallback(() => {
+    setIsVisible(false);
+    if (typeof document !== "undefined") document.body.style.overflow = "";
+    const delay = prefersReduced ? 0 : 400;
+    hideTimerRef.current = window.setTimeout(() => {
+      setActiveIndex(null);
+    }, delay);
+    const last = lastFocusedRef.current;
+    if (last && typeof last.focus === "function") last.focus();
+  }, [prefersReduced]);
+
+  const next = useCallback(() => {
+    setActiveIndex((i) => (i === null ? i : (i + 1) % PROJECTS.length));
+  }, []);
+  const prev = useCallback(() => {
+    setActiveIndex((i) => (i === null ? i : (i - 1 + PROJECTS.length) % PROJECTS.length));
+  }, []);
+
+  // Keyboard handling while the viewer is open.
+  useEffect(() => {
+    if (activeIndex === null) return;
+    function onKeydown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    }
+    document.addEventListener("keydown", onKeydown);
+    return () => document.removeEventListener("keydown", onKeydown);
+  }, [activeIndex, close, next, prev]);
+
+  // Focus the close button once the viewer becomes visible.
+  useEffect(() => {
+    if (isVisible && closeBtnRef.current) closeBtnRef.current.focus();
+  }, [isVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+      if (typeof document !== "undefined") document.body.style.overflow = "";
+    };
+  }, []);
+
+  function onRowEnter(e: React.MouseEvent<HTMLButtonElement>) {
+    if (isCoarse() || !window.InkWorld) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    window.InkWorld.sparkleAt(r.left + 14, r.top + r.height / 2);
+  }
+
+  const project = activeIndex !== null ? PROJECTS[activeIndex] : null;
 
   return (
-    <section
-      id="work"
-      className="relative w-full overflow-hidden bg-ink py-28 md:py-36"
-      aria-label="Selected work"
-    >
-      <ParallaxLayer
-        src="/images/scene/library-1920.webp"
-        alt="Grand ancient archive hall with towering shelves of scrolls"
-        speed={-0.4}
-        mouseStrength={4}
-        className="opacity-20"
-        quality={65}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink via-ink/90 to-ink" />
-
-      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10">
-        <Reveal>
-          <p className="mb-4 font-sans text-xs uppercase tracking-[0.4em] text-gold-soft/80">
-            Section III
-          </p>
-          <h2 className="font-serif-display text-4xl text-parchment sm:text-5xl">
-            The Work
-          </h2>
-          <p className="mt-5 max-w-lg font-sans text-sm leading-relaxed text-parchment/60">
-            Each record below opens like a scroll pulled from the shelf —
-            a project, a role, a purpose.
-          </p>
-        </Reveal>
-
-        <ol className="mt-16 flex flex-col divide-y divide-gold/10 border-y border-gold/10">
-          {projects.map((project, i) => (
-            <Reveal as="li" key={project.slug} delay={Math.min(i * 0.05, 0.3)}>
-              <button
-                type="button"
-                onClick={() => setActiveIndex(i)}
-                className="cursor-hover group flex w-full items-center justify-between gap-6 py-7 text-left transition-colors duration-300 hover:bg-gold/[0.03] sm:py-8"
-              >
-                <div className="flex items-baseline gap-4 sm:gap-8">
-                  <span className="font-sans text-xs text-gold-soft/40 tabular-nums">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <h3 className="font-serif-display text-2xl text-parchment transition-colors duration-300 group-hover:text-gold-soft sm:text-3xl">
-                      {project.name}
-                      {project.featured && (
-                        <span className="ml-3 align-middle font-sans text-[0.6rem] uppercase tracking-[0.2em] text-crimson/80">
-                          Featured
-                        </span>
-                      )}
-                    </h3>
-                    <p className="mt-1 font-sans text-xs uppercase tracking-[0.15em] text-parchment/45">
-                      {project.category}
-                    </p>
-                  </div>
+    <>
+      <ol id="work-list" className="work-list" data-cursor="inspect">
+        {PROJECTS.map((p, i) => (
+          <li className="reveal" key={p.slug}>
+            <button
+              type="button"
+              className="work-item-btn cursor-hover"
+              data-index={String(i)}
+              onClick={() => open(i)}
+              onMouseEnter={onRowEnter}
+            >
+              <div className="work-item-left">
+                <span className="work-item-index">{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3 className="work-item-name">
+                    {p.name}
+                    {p.featured ? <span className="work-item-featured">Featured</span> : null}
+                  </h3>
+                  <p className="work-item-category">{p.category}</p>
                 </div>
-                <span className="hidden shrink-0 font-sans text-xs uppercase tracking-[0.2em] text-parchment/40 transition-all duration-300 group-hover:text-gold-soft group-hover:tracking-[0.3em] sm:inline">
-                  Open →
-                </span>
-              </button>
-            </Reveal>
-          ))}
-        </ol>
-      </div>
+              </div>
+              <span className="work-item-open">Open →</span>
+            </button>
+          </li>
+        ))}
+      </ol>
 
-      <ProjectViewer
-        project={active}
-        onClose={close}
-        onNext={next}
-        onPrev={prev}
-      />
-    </section>
+      <div
+        id="project-viewer"
+        className={"project-viewer" + (isVisible ? " is-visible" : "")}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="project-viewer-title"
+        hidden={project === null}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) close();
+        }}
+      >
+        <div className="project-viewer-scroll">
+          <div className="project-viewer-texture" aria-hidden="true"></div>
+          <button
+            type="button"
+            id="project-viewer-close"
+            className="project-viewer-close cursor-hover"
+            ref={closeBtnRef}
+            onClick={close}
+          >
+            Close ✕
+          </button>
+          <div className="project-viewer-seal" aria-hidden="true">
+            記
+          </div>
+
+          <p id="project-viewer-category" className="eyebrow eyebrow-tight">
+            {project?.category}
+          </p>
+          <h3 id="project-viewer-title" className="project-viewer-title">
+            {project?.name}
+          </h3>
+          <p id="project-viewer-role" className="project-viewer-role">
+            {project?.role}
+          </p>
+
+          <p id="project-viewer-description" className="project-viewer-description">
+            {project?.description}
+          </p>
+
+          <div className="project-viewer-block">
+            <p className="eyebrow eyebrow-tight">Tools &amp; Skills</p>
+            <div id="project-viewer-tools" className="project-viewer-tools">
+              {project?.tools.map((tool) => (
+                <span key={tool}>{tool}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="project-viewer-block project-viewer-purpose">
+            <p className="eyebrow eyebrow-tight">Purpose</p>
+            <p id="project-viewer-outcome" className="project-viewer-outcome">
+              {project?.outcome}
+            </p>
+          </div>
+
+          <div className="project-viewer-nav">
+            <button
+              type="button"
+              id="project-viewer-prev"
+              className="link-gold cursor-hover"
+              onClick={prev}
+            >
+              ← Previous
+            </button>
+            <button
+              type="button"
+              id="project-viewer-next"
+              className="link-gold cursor-hover"
+              onClick={next}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
